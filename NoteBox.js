@@ -26,11 +26,12 @@ class NoteBox {
       } else if (this.isChoosed) {
         p.stroke(255);
         p.strokeWeight(2);
+        this.color = p.color(250, 232, 92, 150);
       } else if (this.isActivate) {
         this.color = p.color(203, 223, 247, 150);
         this.displayInfo(p);
       } else {
-        this.color = p.color(203, 223, 247);
+        this.color = p.color(200, 223, 255 - this.pitch);
       }
   
       p.fill(this.color);
@@ -46,11 +47,12 @@ class NoteBox {
       // Drawing text in 2D coordinates, consider using screen coordinates
       p.push();
       // Convert 3D coordinates to screen coordinates
-      let position = p.createVector(this.position.x + boxWidth / 2, this.position.y - boxHeight / 2, 0);
+      let position = p.createVector(this.position.x + boxWidth / 2, this.position.y - boxHeight / 2, this.position.z - baseWidth / 2);
       p.translate(position.x, position.y, position.z);
       p.fill(0);
-      p.text(`${this.midiNoteToNoteName(this.pitch)}`, 0, 0);
+      p.text(`${this.midiNoteToNoteName(this.pitch)} \n${this.duration}`, 0, 0);
       p.pop();
+
     }
   
     isMouseOver(p) {
@@ -87,7 +89,7 @@ class NoteBox {
       if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                  cam1.eyeY + x._data[1] * dToObj / xMag, 
                  cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                 this.position.x - baseWidth * this.duration, this.position.y - this.pitch / 2, this.position.z - baseWidth / 2) < baseWidth) {
+                 this.position.x - baseWidth * this.duration, this.position.y - this.pitch / 2, this.position.z - baseWidth / 2) < baseWidth / 2) {
         return true;
       } else {
         return false;
@@ -115,7 +117,7 @@ class NoteBox {
       if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                  cam1.eyeY + x._data[1] * dToObj / xMag, 
                  cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                 this.position.x + baseWidth * this.duration / 2, this.position.y - this.pitch / 2, this.position.z + baseWidth) < baseWidth) {
+                 this.position.x + baseWidth * this.duration / 2, this.position.y - this.pitch / 2, this.position.z + baseWidth) < baseWidth / 2) {
         return true;
       } else {
         return false;

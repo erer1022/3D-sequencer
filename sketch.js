@@ -29,6 +29,7 @@ let default_duration = 1;
 let currentNotePitch;
 let currentChoosedBox;
 let sketch3DHeight = 600;
+let sketch2DHeight = 250;
 
 const BoxSide = {
   RIGHT: 'right',
@@ -46,7 +47,6 @@ let R;
 let xMag;
 
 
-
 function preload() {
   font = loadFont('./Roboto/Roboto-Black.ttf');
 }
@@ -54,6 +54,9 @@ function preload() {
 
 // 3D Canvas
 let sketch3D = function(p) {
+  p.preload = function() {
+    font = p.loadFont('./Roboto/Roboto-Black.ttf');
+  }
   p.setup = function() {
     p.createCanvas(p.windowWidth, sketch3DHeight, p.WEBGL).parent('3d-container'); // Create a 3D canvas
     cam1 = p.createCamera();
@@ -99,6 +102,7 @@ let sketch3D = function(p) {
     // Handle duration select change
     noteDurationSelect.changed(() => {
       if (currentChoosedBox) {
+        currentChoosedBox.isChoosed = true;
         selectedDuration = parseFloat(noteDurationSelect.value());
         currentChoosedBox.duration = selectedDuration;
       }
@@ -116,7 +120,7 @@ let sketch3D = function(p) {
   }
 
   p.draw = function() {
-    //p.textFont(font);
+    p.textFont(font);
     p.background(210);
 
     let boxChoosed = false;
@@ -154,23 +158,72 @@ let sketch3D = function(p) {
     // -------------------------------------------- Draw the trackBall --------------------------------------------
     for (let i = 0; i < noteBoxes.length; i++) {
       let currentBox = noteBoxes[i];
-      let distance = noteBoxes[i].duration * baseWidth;
+      //let moveDirection;
+      //let distance;
       let currentTrackBall;
-      const note_duration = convertDurationToToneJS(currentBox.duration);
+      let note_duration = convertDurationToToneJS(currentBox.duration);
       const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+      //let targetPosition;
+      //let nextPitch;
+  
       
       if (currentBox.isActivate) {
         if (trackBalls.length < i + 1) {
-          currentTrackBall = new TrackBall(currentBox.position, currentBox.pitch, distance, note_duration_ms / 1000);
-          trackBalls.push(currentTrackBall);
+          // set the trackBall move direction and move distance 
+          if (noteBoxes.length > 1 && i < noteBoxes.length - 1) {
+            let nextBox = noteBoxes[i + 1];
+            //targetPosition = nextBox.position
+            //nextPitch = nextBox.pitch;
+            
+            ({ moveDirection, distance } = getMoveDirectionAndDistance(currentBox, nextBox));
+            currentTrackBall = new TrackBall(currentBox, nextBox, note_duration_ms / 1000, moveDirection, distance);
+            
+            trackBalls.push(currentTrackBall);
+            
+           } 
+          //else {
+            // Set default
+            //moveDirection = BoxSide.RIGHT;
+            //distance = currentBox.duration * baseWidth;
+            //targetPosition = p.createVector(0, 0, 0);
+            //nextPitch = 60;
+
+          //}
+
+          
         } else {
-          trackBalls[i].updatePosition(p);
+          trackBalls[i].updatePosition();
         }
       }
       // Only display TrackBall if it exists
       if (trackBalls[i]) {
         trackBalls[i].display(p);
       }
+    }
+
+    function getMoveDirectionAndDistance(currentBox, nextBox) {
+      let moveDirection;
+      let distance;
+      
+      if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
+        moveDirection = BoxSide.BACK;
+        distance = baseWidth;
+      } else if (nextBox.position.x > currentBox.position.x) {
+        moveDirection = BoxSide.RIGHT;
+        distance = currentBox.duration * baseWidth;
+      } else if (nextBox.position.x < currentBox.position.x) {
+        moveDirection = BoxSide.LEFT;
+        distance = currentBox.duration * baseWidth;
+      } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
+        moveDirection = BoxSide.FRONT;
+        distance = baseWidth;
+      } else {
+        // Set default
+        moveDirection = BoxSide.RIGHT;
+        distance = currentBox.duration * baseWidth;
+      }
+    
+      return { moveDirection, distance };
     }
 
     // -------------------------------------------- Draw the coordinate axes --------------------------------------------
@@ -284,10 +337,12 @@ let sketch3D = function(p) {
 }
 
 let sketch2D = function(p) {
-  let keys = []; // Declare the keys array here to be in scope
+  p.preload = function() {
+    font = p.loadFont('./Roboto/Roboto-Black.ttf');
+  }
 
   p.setup = function() {
-    p.createCanvas(p.windowWidth, 300).parent('2d-container');
+    p.createCanvas(p.windowWidth, sketch2DHeight).parent('2d-container');
     // Set the piano
     pianoSynth = new Tone.Synth();
     pianoSynth.oscillator.type = "sine";
@@ -296,16 +351,16 @@ let sketch2D = function(p) {
   }
 
   p.draw = function() {
-    //p.textFont(font);
+    p.textFont(font);
     p.background(210);
     isMouseOverKeyboard = p.mouseX >= 0 && p.mouseX <= keys.length * whiteKeyWidth && p.mouseY >= 100 && p.mouseY <= 100 + 90;
     keyboardEffects(p);
   }
 
   function setPianoKeyboard(p) {
-    let whiteX = 0;
+    let whiteX = 200;
     let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    let numOctaves = 3; 
+    let numOctaves = 5; 
     let startOctave = 3; 
 
     for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
@@ -320,7 +375,7 @@ let sketch2D = function(p) {
       }
     }
 
-    whiteX = 0;
+    whiteX = 200;
 
     for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
       for (let i = 0; i < notes.length; i++) {
@@ -436,7 +491,6 @@ function detectAndDrawPotentialBoxes(box, p) {
 function generatePotentialBoxesPositions(box, side, p) {
   let potentialPosition;
   let boxWidth = baseWidth * box.duration;
-  console.log(`box.position.x:${box.position.x} boxWidth? ${boxWidth}`)
 
   switch (side) {
     case BoxSide.RIGHT:
