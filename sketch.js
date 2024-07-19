@@ -25,279 +25,351 @@ let blackKeyWidth = 18;
 let whiteKeyHeight = 90;
 let blackKeyHeight = 50;
 let selectedBox = null;
+let default_duration = 1;
+let currentNotePitch;
+let currentChoosedBox;
+let sketch3DHeight = 600;
+
+const BoxSide = {
+  RIGHT: 'right',
+  LEFT: 'left',
+  BACK: 'back',
+  FRONT: 'front' // Uncomment if you want to include the front side
+};
+
+let cam1;
+let azimuth;
+let zenith;
+let f;
+let x;
+let R;
+let xMag;
+
+
 
 function preload() {
   font = loadFont('./Roboto/Roboto-Black.ttf');
 }
 
-function setup() {
-  createCanvas(windowWidth, windowHeight, WEBGL);
-    pianoSynth = new Tone.Synth();
-    pianoSynth.oscillator.type = "sine";
-    pianoSynth.toMaster();
+
+// 3D Canvas
+let sketch3D = function(p) {
+  p.setup = function() {
+    p.createCanvas(p.windowWidth, sketch3DHeight, p.WEBGL).parent('3d-container'); // Create a 3D canvas
+    cam1 = p.createCamera();
+    p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
+
+    // Set the initial camera position and look at a specific point
+    cam1.setPosition(200, -300, 500); // Adjust the position (x, y, z) as needed
+    cam1.lookAt(0, 0, 0); // Point the camera at the origin
+
 
     noteBoxSynth = new Tone.Synth();
     noteBoxSynth.oscillator.type = "sine";
     noteBoxSynth.toMaster();
 
-  setPianoKeyboard();
-  
-  boxColor = color(255, 227, 0, 100); // Initial color of the box
-  potentialBoxColor = color(0, 100, 255, 100); // Semi-transparent blue for the potential box
-  
-  noteDurationSelect = createSelect(); // Initialize noteDurationSelect
-  noteDurationSelect.position(10, 55);
-  let p = createP("note duration: ");
-  p.position(10, 15);
-  // Wait until the DOM is updated
-  setTimeout(() => {
-    durationDropdown.push({
-      x: noteDurationSelect.elt.offsetLeft,
-      y: noteDurationSelect.elt.offsetTop,
-      width: noteDurationSelect.elt.offsetWidth,
-      height: noteDurationSelect.elt.offsetHeight,
-    });
-  }, 100);
-  
-  // Add duration to dropdown options.
-  for (let duration of note_duration) {
-    noteDurationSelect.option(duration);
-  }
-  // Set the default value
-  noteDurationSelect.selected(note_duration[0]); 
+    // Set colors
+    boxColor = p.color(255, 227, 0, 100); // Initial color of the box
+    potentialBoxColor = p.color(0, 100, 255, 100); // Semi-transparent blue for the potential box
 
-  
-  let button = createButton('▶︎');
-  button.mousePressed(playNote);
-  button.position(400, 55);
-
-  // Add the initial box to the newBoxes array
-  initialBox = new NoteBox(createVector(0, 0, 0), 1, 60); // Initialize the default box
-  noteBoxes.push(initialBox);
-}
-
-function draw() {
-  textFont(font);
-  background(200);
-  
-  isMouseOverKeyboard = mouseX - width / 2 >= -300 && mouseX - width / 2 <= -300 + keys.length * whiteKeyWidth && mouseY - height / 2 >= 300 && mouseY-height/2 <= 90 + 300;
-  keyboardEffects();
-
-  // Apply zoom
-  scale(zoomLevel);
-  
-  rotateAngle = PI / 10;
-  rotateX(-rotateAngle);
-  rotateY(rotateAngle);
-
-  selectedDuration = parseFloat(noteDurationSelect.value());
-
-  // Draw all new boxes
-  noteBoxes.forEach(box => {
-    box.drawBox();
-  });
-
-  if (noteBoxes.length == 1) {
-    // Initialize potential boxes around the original box
-    potentialBoxes = generatePotentialBoxes(noteBoxes[0]);
-  }
-  
-  
-  // Draw all potential boxes
-  potentialBoxes.forEach(pos => {
-    if (isMouseNearBox(pos)) {
-      showPotentialBox = true;
-      potentialBoxPosition = pos;
-      drawPotentialBox(pos);
-    }
-  });
-  
-  if (!showPotentialBox) {
-    potentialBoxPosition = null;
-  }
-  
-  showPotentialBox = false;
-
-  for (let i = 0; i < noteBoxes.length; i++) {
-    let currentBox = noteBoxes[i];
-    let distance = noteBoxes[i].duration * baseWidth;
-    let currentTrackBall;
-    const note_duration = convertDurationToToneJS(currentBox.duration);
-    const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+    // -------------------------------------------- Set note duration select --------------------------------------------
+    // Initialize noteDurationSelect
+    noteDurationSelect = p.createSelect(); 
+    noteDurationSelect.position(10, 55);
+    let pNote = p.createP("note duration: ");
+    pNote.position(10, 15);
     
-    if (currentBox.isActivate) {
-        if (trackBalls.length < i + 1){
-            currentTrackBall = new TrackBall(currentBox.position, currentBox.pitch, distance, note_duration_ms / 1000);
-            trackBalls.push(currentTrackBall);
+    // Wait until the DOM is updated
+    setTimeout(() => {
+      durationDropdown.push({
+        x: noteDurationSelect.elt.offsetLeft,
+        y: noteDurationSelect.elt.offsetTop,
+        width: noteDurationSelect.elt.offsetWidth,
+        height: noteDurationSelect.elt.offsetHeight,
+      });
+    }, 100);
+    
+    // Add duration to dropdown options.
+    for (let duration of note_duration) {
+      noteDurationSelect.option(duration);
+    }
+    // Set the default value
+    noteDurationSelect.selected(note_duration[0]);
+
+    // Handle duration select change
+    noteDurationSelect.changed(() => {
+      if (currentChoosedBox) {
+        selectedDuration = parseFloat(noteDurationSelect.value());
+        currentChoosedBox.duration = selectedDuration;
+      }
+    });
+
+
+    // -------------------------------------------- Create button --------------------------------------------
+    let button = p.createButton('▶︎');
+    button.mousePressed(playNote);
+    button.position(400, 55);
+
+    // Add the initial box to the newBoxes array
+    initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, 60); // Initialize the default box
+    noteBoxes.push(initialBox);
+  }
+
+  p.draw = function() {
+    //p.textFont(font);
+    p.background(210);
+
+    let boxChoosed = false;
+    for (let i = 0; i < noteBoxes.length; i++) {
+      if (noteBoxes[i].isChoosed) {
+        boxChoosed = true;
+      }
+    }
+    // Only if no box is chosen, enable orbit control
+    if (!boxChoosed) {
+      p.orbitControl(3);
+    }
+
+    // -------------------------------------------- Set the camera and related argument --------------------------------------------
+    // Pan: Cam rotation about y-axis (Left Right)
+    azimuth = -p.atan2(cam1.eyeZ - cam1.centerZ, cam1.eyeX - cam1.centerX);
+    // Tilt: Cam rotation about z-axis (Up Down)
+    zenith = -p.atan2(cam1.eyeY - cam1.centerY, p.dist(cam1.eyeX, cam1.eyeZ, cam1.centerX, cam1.centerZ));
+    f = p.height * 4.3 / 5;
+    x = [-1, (p.mouseY - p.height / 2) / f, -(p.mouseX - p.width / 2) / f];
+    R = math.multiply(Rz(-zenith), Ry(azimuth));
+    x = math.multiply(x, R);
+    xMag = p.dist(0, 0, 0, x._data[0], x._data[1], x._data[2]);
+
+    // -------------------------------------------- set the duration select --------------------------------------------
+    selectedDuration = parseFloat(noteDurationSelect.value());
+
+    // -------------------------------------------- Draw all boxes --------------------------------------------
+    noteBoxes.forEach(box => {
+      // Always detect the latest generated box
+      detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
+      box.drawBox(p);
+    });
+
+    // -------------------------------------------- Draw the trackBall --------------------------------------------
+    for (let i = 0; i < noteBoxes.length; i++) {
+      let currentBox = noteBoxes[i];
+      let distance = noteBoxes[i].duration * baseWidth;
+      let currentTrackBall;
+      const note_duration = convertDurationToToneJS(currentBox.duration);
+      const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+      
+      if (currentBox.isActivate) {
+        if (trackBalls.length < i + 1) {
+          currentTrackBall = new TrackBall(currentBox.position, currentBox.pitch, distance, note_duration_ms / 1000);
+          trackBalls.push(currentTrackBall);
         } else {
-            trackBalls[i].updatePosition();
+          trackBalls[i].updatePosition(p);
+        }
+      }
+      // Only display TrackBall if it exists
+      if (trackBalls[i]) {
+        trackBalls[i].display(p);
+      }
+    }
+
+    // -------------------------------------------- Draw the coordinate axes --------------------------------------------
+    p.push();
+    p.stroke(255, 255, 255);
+    p.line(-150, 0, 0, 150, 0, 0);
+    p.stroke(255, 255, 255);
+    p.line(0, -150, 0, 0, 150, 0);
+    p.stroke(255, 255, 255);
+    p.line(0, 0, -150, 0, 0, 150);
+    p.pop();
+  }
+  
+  // Function to handle mouse clicks
+  p.mousePressed = function() {
+    let overDurationDropdown = isMouseOverDropdown(durationDropdown, p);
+    
+    // -------------------------------------------- Determine if any box is currently chosen --------------------------------------------
+    currentChoosedBox = noteBoxes.find(box => box.isChoosed);
+    let clickedBox = noteBoxes.find(box => box.isMouseOver(p));
+    // If a box is clicked, choose it
+    if (clickedBox) {
+        noteBoxes.forEach(box => {
+            box.isChoosed = (box === clickedBox);
+        });
+    } else if (!overDurationDropdown && !currentNotePitch) {
+        // If the mouse click is not on a dropdown or piano key, deselect all boxes
+        noteBoxes.forEach(box => {
+            box.isChoosed = false;
+        });
+    }
+
+    if (overDurationDropdown && currentChoosedBox) {
+      currentChoosedBox.isChoosed = true;
+      selectedDuration = parseFloat(noteDurationSelect.value());
+      currentChoosedBox.duration = selectedDuration;
+    } 
+
+    // -------------------------------------------- define how to generate a new box --------------------------------------------
+    // Check if any box is chosen
+    let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
+
+    // Only handle potential box position if not interacting with dropdowns and no box is chosen
+      if (!anyBoxChosen && !overDurationDropdown && !currentNotePitch) {
+        if (!isOccupied(potentialBoxPosition)) {
+            let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, baseWidth);
+            noteBoxes.push(newNoteBox);
+            //detectAndDrawPotentialBoxes(newNoteBox, p);
+            //potentialBoxPosition = null; // Reset potential box position
         }
     }
-    // Only display TrackBall if it exists
-  if (trackBalls[i]) {
-    trackBalls[i].display();
+
   }
+  function isMouseOverDropdown(dropdowns, p) {
+      for (let dropdown of dropdowns) {
+        if (p.mouseX >= dropdown.x && p.mouseX <= dropdown.x + dropdown.width &&
+            p.mouseY + sketch3DHeight / 2 >= dropdown.y && p.mouseY  + sketch3DHeight / 2 <= dropdown.y + dropdown.height) {
+          return true;
+        }
+      }
+      return false;
   }
+
+  function playNote() {
+    // reset the trackBalls
+    trackBalls = [];
+    const now = Tone.now();
+    let currentTime = now;
+  
+    noteBoxes.forEach(box => {
+        const note_pitch = midiNoteToNoteName(box.pitch);
+        const note_duration = convertDurationToToneJS(box.duration);
+        const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+  
+        // Schedule the note to be played at the correct time
+        noteBoxSynth.triggerAttackRelease(note_pitch, note_duration, currentTime);
+        
+  
+        // Schedule the activation of the box and the corresponding key
+        setTimeout(() => {
+            box.isActivate = true;
+            for (let key of keys) {
+                if (midiNameToNumber(key.note) == box.pitch) {
+                    key.isActivate = true;
+                }
+            }
+        }, (currentTime - now) * 1000);
+  
+        // Schedule the deactivation of the box and the corresponding key
+        setTimeout(() => {
+            box.isActivate = false;
+            for (let key of keys) {
+                if (midiNameToNumber(key.note) == box.pitch) {
+                    key.isActivate = false;
+                }
+            }
+        }, (currentTime - now) * 1000 + note_duration_ms);
+  
+        // Increment the currentTime by the duration of the note
+        currentTime += Tone.Time(note_duration).toSeconds();
+    });
+  }
+  
+  // Helper function to convert Tone.js duration to milliseconds
+  Tone.Time.prototype.toMilliseconds = function() {
+    return this.toSeconds() * 1000;
+  }
+
+  // Function to check if the mouse is over any dropdown menu
+
 }
 
-function setPianoKeyboard() {
-let whiteX = 0;
-let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-let numOctaves = 3; 
-let startOctave = 3; 
+let sketch2D = function(p) {
+  let keys = []; // Declare the keys array here to be in scope
 
-for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
-  for (let i = 0; i < notes.length; i++) {
-    let note = notes[i];
-    let isBlack = note.includes('#');
-    
-    if (!isBlack) {
-      keys.push(new Key(note + octave, whiteX - 300, 300, whiteKeyWidth, whiteKeyHeight, '#fffff0'));
-      whiteX += whiteKeyWidth;
+  p.setup = function() {
+    p.createCanvas(p.windowWidth, 300).parent('2d-container');
+    // Set the piano
+    pianoSynth = new Tone.Synth();
+    pianoSynth.oscillator.type = "sine";
+    pianoSynth.toDestination();
+    setPianoKeyboard(p);
+  }
+
+  p.draw = function() {
+    //p.textFont(font);
+    p.background(210);
+    isMouseOverKeyboard = p.mouseX >= 0 && p.mouseX <= keys.length * whiteKeyWidth && p.mouseY >= 100 && p.mouseY <= 100 + 90;
+    keyboardEffects(p);
+  }
+
+  function setPianoKeyboard(p) {
+    let whiteX = 0;
+    let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    let numOctaves = 3; 
+    let startOctave = 3; 
+
+    for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+      for (let i = 0; i < notes.length; i++) {
+        let note = notes[i];
+        let isBlack = note.includes('#');
+        
+        if (!isBlack) {
+          keys.push(new Key(note + octave, whiteX, 100, whiteKeyWidth, whiteKeyHeight, p.color(255, 255, 255)));
+          whiteX += whiteKeyWidth;
+        }
+      }
+    }
+
+    whiteX = 0;
+
+    for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+      for (let i = 0; i < notes.length; i++) {
+        let note = notes[i];
+        let isBlack = note.includes('#');
+        
+        if (isBlack) {
+          let blackX = whiteX - blackKeyWidth / 2;
+          keys.push(new Key(note + octave, blackX, 100, blackKeyWidth, blackKeyHeight, p.color(0, 0, 0)));
+        }
+
+        if (!isBlack) {
+          whiteX += whiteKeyWidth;
+        }
+      }
     }
   }
-}
 
-whiteX = 0;
+  function keyboardEffects(p) {
+    for (let key of keys) {
+      if (isMouseOverKeyboard) {
+        key.lighten(p);
+        if (key.isMouseOver(p)) {
+          key.color = p.color(147, 196, 245);
+        } 
+      } else {
+        key.darken(p);
+      }
 
-for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
-  for (let i = 0; i < notes.length; i++) {
-    let note = notes[i];
-    let isBlack = note.includes('#');
-    
-    if (isBlack) {
-      let blackX = whiteX - blackKeyWidth / 2;
-      keys.push(new Key(note + octave, blackX - 300, 300, blackKeyWidth, blackKeyHeight, 'black'));
-    }
-
-    if (!isBlack) {
-      whiteX += whiteKeyWidth;
-    }
-  }
-}
-}
-
-function keyboardEffects() {
-  for (let key of keys) {
-    if (isMouseOverKeyboard) {
-      key.lighten();
-      if (key.isMouseOver()) {
-        key.color = color(147, 196, 245);
-       // key.stroke = (255, 255, 255);
+      if (key.isActivate) {
+        key.color = p.color(147, 196, 245);
       } 
-    } else {
-      key.darken();
+      key.display(p);
     }
-
-    if (key.isActivate) {
-      key.color = color(147, 196, 245);
-    } 
-    key.display();
-  }
-}
-
-// Function to generate potential boxes around a given position
-function generatePotentialBoxes(box) {
-  if (noteDurationSelect) { // Check if noteDurationSelect is defined
-    selectedDuration = parseFloat(noteDurationSelect.value()); // Get the selected value
   }
 
-  let potentialPositions = [];
-  let boxWidth = baseWidth * box.duration
-
-  potentialPositions = [
-    createVector(box.position.x + boxWidth, box.position.y, box.position.z), // Right side
-  ];
-  // Filter out positions that are already occupied
-  return potentialPositions.filter(pos => !isOccupied(pos));
-}
-
-// Function to draw a potential box
-function drawPotentialBox(position) {
-  if (noteDurationSelect) { // Check if noteDurationSelect is defined
-    selectedDuration = parseFloat(noteDurationSelect.value()); // Get the selected value
-  }
-  
-  boxWidth = baseWidth * selectedDuration;
-  boxHeight = baseWidth;
-  
-  push();
-  fill(potentialBoxColor);
-  stroke(210);
-  translate(position.x + boxWidth / 2, -boxHeight / 2, position.z);
-  box(baseWidth); // Default potential box size
-  pop();
-}
-
-// Function to check if the mouse is near a box
-function isMouseNearBox(position) {
-  let mouseX3D = mouseX - width / 2;
-  let mouseY3D = mouseY - height / 2;
-  let dx = mouseX3D - position.x;
-  let dy = mouseY3D - position.y;
-  let distance = sqrt(dx * dx + dy * dy);
-  return distance < baseWidth * selectedDuration / 2;
-}
-
-// Function to check if the mouse is over any dropdown menu
-function isMouseOverDropdown(dropdowns) {
-    for (let dropdown of dropdowns) {
-      if (mouseX >= dropdown.x && mouseX <= dropdown.x + dropdown.width &&
-          mouseY >= dropdown.y && mouseY <= dropdown.y + dropdown.height) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-// Function to handle mouse clicks
-function mousePressed() {
-  let note_pitch = clickPianoKeyboard();
-  let overDurationDropdown = isMouseOverDropdown(durationDropdown);
-
-  // Determine if any box is currently chosen
-  let currentChoosedBox = noteBoxes.find(box => box.isChoosed);
-  // Check if a box is clicked
-  let clickedBox = noteBoxes.find(box => box.isMouseOver());
-  // If a box is clicked, choose it
-  if (clickedBox) {
-      noteBoxes.forEach(box => {
-          box.isChoosed = (box === clickedBox);
-      });
-  } else if (!overDurationDropdown && !note_pitch) {
-      // If the mouse click is not on a dropdown or piano key, deselect all boxes
-      noteBoxes.forEach(box => {
-          box.isChoosed = false;
-      });
-  }
-
-  // If a box is already chosen and clicked on a dropdown or piano key, keep it chosen
-  if (currentChoosedBox && (overDurationDropdown || note_pitch)) {
-      currentChoosedBox.isChoosed = true;
-  }
-
-  
-  if (overDurationDropdown) {
-    selectedDuration = parseFloat(noteDurationSelect.value());
-    currentChoosedBox.duration = selectedDuration;
-  } else if (note_pitch) {
-    currentChoosedBox.pitch = midiNameToNumber(note_pitch);
-  }
-
-  // Check if any box is chosen
-  let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
-
-  // Only handle potential box position if not interacting with dropdowns and no box is chosen
-  if (!anyBoxChosen && !overDurationDropdown && potentialBoxPosition) {
-      if (!isOccupied(potentialBoxPosition)) {
-          let newNoteBox = new NoteBox(potentialBoxPosition, 1, baseWidth);
-          noteBoxes.push(newNoteBox);
-          potentialBoxes = generatePotentialBoxes(newNoteBox);
-          potentialBoxPosition = null; // Reset potential box position
+  p.mousePressed = function() {
+      currentNotePitch = clickPianoKeyboard();
+      if (currentNotePitch && currentChoosedBox) {
+        resetNoteBoxPitch();
       }
   }
-}
 
+  p.mouseReleased = function () {
+    for (let key of keys) {
+      key.color = key.originalColor; // Revert color when released
+    }
+    pianoSynth.triggerRelease();
+  }
 
   function clickPianoKeyboard() {
     let key = getKeyUnderMouse();
@@ -306,30 +378,115 @@ function mousePressed() {
       return key.note;
     }
   }
-
-  function mouseReleased() {
-    for (let key of keys) {
-      key.color = key.originalColor; // Revert color when released
-    }
-    pianoSynth.triggerRelease();
-  }
-
+  
   function getKeyUnderMouse() {
     for (let key of keys) {
-      if (key.isMouseOver()) {
+      if (key.isMouseOver(p)) {
         return key;
       }
     }
     return null;
   }
+}
+
+// Create the p5 instances
+new p5(sketch3D);
+new p5(sketch2D);
+
+function resetNoteBoxPitch() {
+  currentChoosedBox.isChoosed = true;
+  currentChoosedBox.pitch = midiNameToNumber(currentNotePitch);
+}
+
+
+function detectAndDrawPotentialBoxes(box, p) {
+  if (box.isMouseNearBoxBackSide(p)) {
+    potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.BACK, p);
+    showPotentialBox = true;
+    drawPotentialBox(potentialBoxPosition, p);
+  }
+
+  if (box.isMouseNearBoxFrontSide(p)) {
+    potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.FRONT, p);
+    showPotentialBox = true;
+    drawPotentialBox(potentialBoxPosition, p);
+  }
+
+  if (box.isMouseNearBoxLeftSide(p)) {
+    potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.LEFT, p);
+    showPotentialBox = true;
+    drawPotentialBox(potentialBoxPosition, p);
+  }
+
+  if (box.isMouseNearBoxRightSide(p)) {
+    potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.RIGHT, p);
+    showPotentialBox = true;
+    drawPotentialBox(potentialBoxPosition, p);
+  }
+
+  if (!showPotentialBox) {
+    potentialBoxPosition = null;
+  }
+  
+  showPotentialBox = false;
+}
+
+
+/// Function to generate potential boxes around a given position
+function generatePotentialBoxesPositions(box, side, p) {
+  let potentialPosition;
+  let boxWidth = baseWidth * box.duration;
+  console.log(`box.position.x:${box.position.x} boxWidth? ${boxWidth}`)
+
+  switch (side) {
+    case BoxSide.RIGHT:
+      potentialPosition = p.createVector(box.position.x + boxWidth, box.position.y, box.position.z);
+      break;
+    case BoxSide.LEFT:
+      potentialPosition = p.createVector(box.position.x - boxWidth, box.position.y, box.position.z);
+      break;
+    case BoxSide.BACK:
+      potentialPosition = p.createVector(box.position.x, box.position.y, box.position.z - baseWidth);
+      break;
+    case BoxSide.FRONT: // Uncomment if you want to include the front side
+      potentialPosition = p.createVector(box.position.x, box.position.y, box.position.z + baseWidth);
+      break;
+    default:
+      potentialPosition = null;
+  }
+
+  // Filter out positions that are already occupied
+  if (potentialPosition && !isOccupied(potentialPosition)) {
+    return potentialPosition;
+  } else {
+    return null;
+  }
+}
+
+// Function to draw a potential box
+function drawPotentialBox(position, p) {
+  boxWidth = baseWidth;
+  boxHeight = baseWidth;
+  
+  p.push();
+  p.fill(potentialBoxColor);
+  p.stroke(210);
+  p.translate(position.x + boxWidth / 2, -boxHeight / 2, position.z - baseWidth / 2);
+  p.box(baseWidth); // Default potential box size
+  p.pop();
+}
+
+
+
+
+  
 
 // Function to check if a position is already occupied
 function isOccupied(position) {
   for (let i = 0; i < noteBoxes.length; i++) {
     let boxPos = noteBoxes[i].position.x;
     let boxWidth = noteBoxes[i].duration * baseWidth;
-    //console.log(`boxPos: ${boxPos} boxRange:${boxPos - boxWidth / 2} - ${boxPos + boxWidth / 2}`);
-    if (position >= boxPos - boxWidth / 2 && position < boxPos + boxWidth / 2) {
+    if (position >= boxPos && position < boxPos + boxWidth) {
       return true;
     }
   }
@@ -343,49 +500,7 @@ function mouseWheel(event) {
   zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
 }
 
-function playNote() {
-  // reset the trackBalls
-  trackBalls = [];
-  const now = Tone.now();
-  let currentTime = now;
 
-  noteBoxes.forEach(box => {
-      const note_pitch = midiNoteToNoteName(box.pitch);
-      const note_duration = convertDurationToToneJS(box.duration);
-      const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-
-      // Schedule the note to be played at the correct time
-      noteBoxSynth.triggerAttackRelease(note_pitch, note_duration, currentTime);
-
-      // Schedule the activation of the box and the corresponding key
-      setTimeout(() => {
-          box.isActivate = true;
-          for (let key of keys) {
-              if (midiNameToNumber(key.note) == box.pitch) {
-                  key.isActivate = true;
-              }
-          }
-      }, (currentTime - now) * 1000);
-
-      // Schedule the deactivation of the box and the corresponding key
-      setTimeout(() => {
-          box.isActivate = false;
-          for (let key of keys) {
-              if (midiNameToNumber(key.note) == box.pitch) {
-                  key.isActivate = false;
-              }
-          }
-      }, (currentTime - now) * 1000 + note_duration_ms);
-
-      // Increment the currentTime by the duration of the note
-      currentTime += Tone.Time(note_duration).toSeconds();
-  });
-}
-
-// Helper function to convert Tone.js duration to milliseconds
-Tone.Time.prototype.toMilliseconds = function() {
-  return this.toSeconds() * 1000;
-}
 
 // Function to convert note duration to Tone.js notation
 function convertDurationToToneJS(duration) {
@@ -432,3 +547,28 @@ function convertDurationToToneJS(duration) {
         throw new Error("Invalid MIDI note name");
     }
 }
+
+function Rx(th) {
+  return math.matrix([
+    [1, 0, 0],
+    [0, Math.cos(th), -Math.sin(th)],
+    [0, Math.sin(th), Math.cos(th)]
+  ]);
+}
+
+function Ry(th) {
+  return math.matrix([
+    [Math.cos(th), 0, -Math.sin(th)],
+    [0, 1, 0],
+    [Math.sin(th), 0, Math.cos(th)]
+  ]);
+}
+
+function Rz(th) {
+  return math.matrix([
+    [Math.cos(th), Math.sin(th), 0],
+    [-Math.sin(th), Math.cos(th), 0],
+    [0, 0, 1]
+  ]);
+}
+
