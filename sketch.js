@@ -1,4 +1,5 @@
 let font;
+let trackBallBase = 20;
 let boxColor;
 let potentialBoxColor;
 let showPotentialBox = false;
@@ -30,6 +31,8 @@ let currentNotePitch;
 let currentChoosedBox;
 let sketch3DHeight = 600;
 let sketch2DHeight = 250;
+
+let defaultTrackBall;
 
 const BoxSide = {
   RIGHT: 'right',
@@ -156,84 +159,108 @@ let sketch3D = function(p) {
     });
 
     // -------------------------------------------- Draw the trackBall --------------------------------------------
-    for (let i = 0; i < noteBoxes.length; i++) {
-      let currentBox = noteBoxes[i];
-      //let moveDirection;
-      //let distance;
-      let currentTrackBall;
-      let note_duration = convertDurationToToneJS(currentBox.duration);
-      const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-      //let targetPosition;
-      //let nextPitch;
+    // for (let i = 0; i < noteBoxes.length; i++) {
+    //   let currentBox = noteBoxes[i];
+    //   let moveDirection;
+    //   let distance;
+    //   let currentTrackBall;
+    //   let note_duration = convertDurationToToneJS(currentBox.duration);
+    //   const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+    //   //let targetPosition;
+    //   //let nextPitch;
   
       
-      if (currentBox.isActivate) {
-        if (trackBalls.length < i + 1) {
-          // set the trackBall move direction and move distance 
-          if (noteBoxes.length > 1 && i < noteBoxes.length - 1) {
-            let nextBox = noteBoxes[i + 1];
-            //targetPosition = nextBox.position
-            //nextPitch = nextBox.pitch;
+    //   if (currentBox.isActivate) {
+    //     if (trackBalls.length < i + 1) {
+    //       // set the trackBall move direction and move distance 
+    //       if (noteBoxes.length > 1 && i < noteBoxes.length - 1) {
+    //         let nextBox = noteBoxes[i + 1];
+    //         //targetPosition = nextBox.position
+    //         //nextPitch = nextBox.pitch;
             
-            ({ moveDirection, distance } = getMoveDirectionAndDistance(currentBox, nextBox));
-            currentTrackBall = new TrackBall(currentBox, nextBox, note_duration_ms / 1000, moveDirection, distance);
-            
-            trackBalls.push(currentTrackBall);
-            
-           } 
-          //else {
-            // Set default
-            //moveDirection = BoxSide.RIGHT;
-            //distance = currentBox.duration * baseWidth;
-            //targetPosition = p.createVector(0, 0, 0);
-            //nextPitch = 60;
+    //         ({ moveDirection, distance } = getMoveDirectionAndDistance(currentBox, nextBox));
+    //         currentTrackBall = new TrackBall(currentBox, nextBox, note_duration_ms / 1000, moveDirection, distance);
+    //         trackBalls.push(currentTrackBall);
+    //        } 
+    //       //else {
+    //         // Set default
+    //         //moveDirection = BoxSide.RIGHT;
+    //         //distance = currentBox.duration * baseWidth;
+    //         //targetPosition = p.createVector(0, 0, 0);
+    //         //nextPitch = 60;
 
-          //}
+    //       //}
+    //     } else {
+    //       trackBalls[i].updatePosition();
+    //     }
+    //   }
+    //   // Only display TrackBall if it exists
+    //   if (trackBalls[i]) {
+    //     trackBalls[i].display(p);
+    //   }
+    // }
+      
+      for (let i = 0; i < noteBoxes.length; i++ ){
+        // for each track, set 1 trackball
+        let currentBox = noteBoxes[i];
+        let note_duration = convertDurationToToneJS(currentBox.duration);
+        let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+        let nextBox;
+        let moveDirection;
 
-          
-        } else {
-          trackBalls[i].updatePosition();
+        if (!defaultTrackBall) {
+          defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
         }
-      }
-      // Only display TrackBall if it exists
-      if (trackBalls[i]) {
-        trackBalls[i].display(p);
-      }
-    }
 
-    function getMoveDirectionAndDistance(currentBox, nextBox) {
+        if (i < noteBoxes.length - 1) {
+          nextBox = noteBoxes[i + 1];
+          if (currentBox.isActivate ) {
+            moveDirection = getMoveDirection(currentBox, nextBox);
+            console.log(`d: ${moveDirection}`)
+            defaultTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
+          }
+        }
+        
+          defaultTrackBall.display(p);
+        
+
+
+      }
+      
+
+    function getMoveDirection(currentBox, nextBox) {
       let moveDirection;
       let distance;
       
       if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
         moveDirection = BoxSide.BACK;
-        distance = baseWidth;
+        //distance = baseWidth;
       } else if (nextBox.position.x > currentBox.position.x) {
         moveDirection = BoxSide.RIGHT;
-        distance = currentBox.duration * baseWidth;
+        //distance = currentBox.duration * baseWidth;
       } else if (nextBox.position.x < currentBox.position.x) {
         moveDirection = BoxSide.LEFT;
-        distance = currentBox.duration * baseWidth;
+        //distance = currentBox.duration * baseWidth;
       } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
         moveDirection = BoxSide.FRONT;
-        distance = baseWidth;
+        //distance = baseWidth;
       } else {
         // Set default
         moveDirection = BoxSide.RIGHT;
-        distance = currentBox.duration * baseWidth;
+        //distance = currentBox.duration * baseWidth;
       }
-    
-      return { moveDirection, distance };
+      return moveDirection;
+      //return { moveDirection, distance };
     }
 
     // -------------------------------------------- Draw the coordinate axes --------------------------------------------
     p.push();
     p.stroke(255, 255, 255);
-    p.line(-150, 0, 0, 150, 0, 0);
+    p.line(-550, 0, 0, 550, 0, 0);
     p.stroke(255, 255, 255);
-    p.line(0, -150, 0, 0, 150, 0);
+    p.line(0, -550, 0, 0, 550, 0);
     p.stroke(255, 255, 255);
-    p.line(0, 0, -150, 0, 0, 150);
+    p.line(0, 0, -550, 0, 0, 550);
     p.pop();
   }
   
@@ -288,8 +315,8 @@ let sketch3D = function(p) {
   }
 
   function playNote() {
-    // reset the trackBalls
-    trackBalls = [];
+    // reset the trackBall
+    defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
     const now = Tone.now();
     let currentTime = now;
   

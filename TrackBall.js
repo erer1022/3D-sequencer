@@ -1,131 +1,98 @@
 class TrackBall {
-  constructor(currentBox, nextBox, duration, moveDirection, distance) {
-    this.x = currentBox.position.x + 10;
-    this.y = -currentBox.pitch - 10;
-    this.z = currentBox.position.z - baseWidth / 2;
-    this.targetX = nextBox.position.x;
-    this.targetY = -nextBox.pitch - 10;
-
-    this.reachedTarget = false;
-    this.isJumping = false;
-
-    this.duration = duration;
-    this.direction = moveDirection;
-    this.distance = distance;
+  constructor(defaultPosition) {
+    this.x = defaultPosition.x + baseWidth / 2;
+    this.y = - baseWidth - trackBallBase / 2;
+    this.z = defaultPosition.z - baseWidth / 2;
+    //this.isJumping = false;
     this.angle = 0;
-    // this.distance = distance;
-    // this.velocity = distance / duration;
   }
 
-  updatePosition() {
-    let distance;
-    let velocityX;
-    let velocityY;
-    //console.log(`direction: ${this.direction} x: ${this.x} distance: ${this.distance}`)
-    switch (this.direction) {
+  updatePosition(currentBox, nextBox, moveDirection, duration) {
+    // set the ball at the center of the currentBox
+    let currentX = currentBox.position.x + currentBox.duration * baseWidth / 2;
+    let currentY = - currentBox.pitch - trackBallBase / 2;
+    let currentZ = currentBox.position.z - baseWidth / 2;
+
+    let targetX = nextBox.position.x + nextBox.duration * baseWidth / 2;
+    let targetY = - nextBox.pitch - trackBallBase / 2;
+    let targetZ = nextBox.position.z - baseWidth / 2;
+
+    let velocityX = (targetX - currentX) / duration / 60;
+    let velocityY = (targetY - currentY) / duration / 60;
+    let velocityZ = (targetZ - currentZ) / duration / 60;
+
+    
+    switch (moveDirection) {
       case BoxSide.RIGHT:
-        distance = this.targetX - this.x;
-        velocityX = (distance + 20) / this.duration / 60;
-        velocityY = (this.y - this.targetY) / 10;
-
-        console.log(`distance: ${distance} velocityX: ${velocityX} velocityY: ${velocityY}`)
-
-        if (this.x + this.duration * baseWidth < this.targetX) {
+        
+        if(this.x < targetX) {
+          // velocityX < 0
+          console.log(`this.x ${this.x} targetX: ${targetX}`)
           this.isJumping = true;
-          this.jumpToRight(velocityX, velocityY)
+          this.x += velocityX;
+          this.y += velocityY;
         } else {
           this.isJumping = false;
-          this.moveRight(velocityX);
+          this.x = targetX;
+          this.y = targetY;
         }
-        
         break;
-      // case BoxSide.LEFT:
-      //   this.target = this.x - this.distance;
-      //   this.goLeft();
-      //   break;
-      // case BoxSide.BACK:
-      //   this.target = this.z - this.distance;
-      //   this.goBack();
-      //   break;
-      // case BoxSide.FRONT: // Uncomment if you want to include the front side
-      // this.target = this.z + this.distance;
-      // this.goFront();
-      //   break;
-      // default:
-      //   potentialPosition = null;
-    }
-  }
 
-  jumpToRight(velocityX, velocityY) {
-      this.x += velocityX;
-      this.y -= velocityY;
+      case BoxSide.LEFT:
+      if(this.x > targetX) {
+        // velocityX < 0
+        this.isJumping = true;
+        this.x += velocityX;
+        this.y += velocityY;
+      } else {
+        this.isJumping = false;
+        this.x = targetX;
+        this.y = targetY;
+      }
+      break;
+
+      case BoxSide.FRONT:
+        if(this.z < targetZ) {
+          this.isJumping = true;
+          this.z += velocityZ;
+          this.y += velocityY;
+        } else {
+          this.isJumping = false;
+          this.z = targetZ;
+          this.y = targetY;
+        }
+        break;
+
+      case BoxSide.BACK:
+      if(this.z > targetZ) {
+        this.isJumping = true;
+        // velocityZ < 0
+        this.z += velocityZ;
+        this.y += velocityY;
+      } else {
+        this.isJumping = false;
+        this.z = targetZ;
+        this.y = targetY;
+      }
+      break;
+
+    }
     
-  }
-
-  moveRight(velocityX) {
-    if (this.x + 10 <= this.targetX) {
-      this.x += velocityX;
-    } else {
-      this.x = this.targetX;
-      this.reachedTarget = true;
-    }
-  }
-
-  // goLeft() {
-  //   if (this.x >= this.target) {
-  //     this.x -= this.velocity / 60;
-  //   } else {
-  //     this.x = this.target;
-  //   }
-  //   // Check if the target is reached
-  //   if (this.x <= this.target - 1) {
-  //     this.reachedTarget = true;
-  //   } else {
-  //     this.reachedTarget = false;
-  //   }
-  // }
-
-  // goFront() {
-  //   if (this.z <= this.target) {
-  //     this.z += this.velocity / 60;
-  //   } else {
-  //     this.z = this.target;
-  //   }
-  //   // Check if the target is reached
-  //   if (this.z <= this.target - 1) {
-  //     this.reachedTarget = true;
-  //   } else {
-  //     this.reachedTarget = false;
-  //   }
-  // }
-
-  // goBack() {
-  //   if (this.z >= this.target) {
-  //     this.z -= this.velocity / 60;
-  //   } else {
-  //     this.z = this.target;
-  //   }
-  //   // Check if the target is reached
-  //   if (this.z <= this.target - 1) {
-  //     this.reachedTarget = true;
-  //   } else {
-  //     this.reachedTarget = false;
-  //   }
-  // }
+   }
 
   display(p) {
-    if (this.reachedTarget) return;
+    //if (this.reachedTarget) return;
     p.push();
     p.translate(this.x, this.y, this.z);
-    if (this.isJumping) {
-      p.rotateZ(this.angle);
-    }
+    // if (this.isJumping) {
+    //  p.rotateZ(this.angle);
+    // }
     
     p.fill(235, 229, 114, 200);
     p.stroke(255, 255, 255);
-    p.box(20);
+    p.cone(trackBallBase / 2, trackBallBase);
     p.pop();
 
-    this.angle += 3 / 10;
+    this.angle += 1 / 100;
   }
 }
