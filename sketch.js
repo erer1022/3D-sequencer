@@ -71,9 +71,13 @@ let sketch3D = function(p) {
     noteBoxSynth.toMaster();
 
     // -------------------------------------------- Create button --------------------------------------------
-    let button = p.createButton('▶︎');
-    button.mousePressed(playNote);
-    button.position(1300, 105);
+    let playButton = p.createButton('▶︎');
+    playButton.mousePressed(playNote);
+    playButton.position(1300, 105);
+
+    let deleteButton = p.createButton('Delete note box 📦');
+    deleteButton.mousePressed(deleteLatestBox);
+    deleteButton.position(1300, 165);
 
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, 60); // Initialize the default box
@@ -267,7 +271,11 @@ let sketch3D = function(p) {
     return this.toSeconds() * 1000;
   }
 
-  // Function to check if the mouse is over any dropdown menu
+  function deleteLatestBox() {
+    if (noteBoxes.length > 1) {
+      noteBoxes.pop();
+    }
+  }
 
 }
 
