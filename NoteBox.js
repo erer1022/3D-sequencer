@@ -52,7 +52,6 @@ class NoteBox {
       p.fill(0);
       p.text(`${this.midiNoteToNoteName(this.pitch)} \n${this.duration}`, 0, 0);
       p.pop();
-
     }
   
     isMouseOver(p) {

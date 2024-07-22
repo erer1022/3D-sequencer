@@ -1,46 +1,36 @@
 let font;
-let trackBallBase = 20;
-let boxColor;
-let potentialBoxColor;
-let showPotentialBox = false;
-let potentialBoxPosition = null;
-let noteBoxes = []; // Array to store newly created boxes with their note_duration
-let potentialBoxes = []; // Array to store potential boxes
-let trackBalls = [];
-let zoomLevel = 1; // Variable to store the zoom level
-let baseWidth = 60;
-let boxWidth;
-let boxHeight;
-let note_duration = [1, 1/2, 1/4, 1/8, 1/16];
-let noteDurationSelect; // Declare noteDurationSelect globally
-let durationDropdown = [];
-let selectedDuration = 1;
 let pianoSynth;
 let noteBoxSynth;
 let initialBox;
-let rotateAngle;
-let keys = [];
-let isMouseOverKeyboard = false;
+let currentNotePitch;
+let currentNoteDuration;
+let currentChoosedBox;
+let defaultTrackBall;
+
+let default_duration = 1;
+let trackBallBase = 20;
+let zoomLevel = 1; // Variable to store the zoom level
+let baseWidth = 60;
 let whiteKeyWidth = 30;
 let blackKeyWidth = 18;
 let whiteKeyHeight = 90;
 let blackKeyHeight = 50;
-let selectedBox = null;
-let default_duration = 1;
-let currentNotePitch;
-let currentChoosedBox;
 let sketch3DHeight = 600;
 let sketch2DHeight = 250;
 
-let defaultTrackBall;
+let potentialBoxPosition = null;
 
-const BoxSide = {
-  RIGHT: 'right',
-  LEFT: 'left',
-  BACK: 'back',
-  FRONT: 'front' // Uncomment if you want to include the front side
-};
+let noteBoxes = []; // Array to store newly created boxes with their note_duration
+let potentialBoxes = []; // Array to store potential boxes
+let trackBalls = [];
+let keys = [];
+let noteDurations = [];
+let note_duration = [1, 1/2, 1/4, 1/8, 1/16];
 
+let isMouseOverKeyboard = false;
+let showPotentialBox = false;
+
+// camera arguments
 let cam1;
 let azimuth;
 let zenith;
@@ -49,11 +39,16 @@ let x;
 let R;
 let xMag;
 
+const BoxSide = {
+  RIGHT: 'right',
+  LEFT: 'left',
+  BACK: 'back',
+  FRONT: 'front' // Uncomment if you want to include the front side
+};
 
 function preload() {
   font = loadFont('./Roboto/Roboto-Black.ttf');
 }
-
 
 // 3D Canvas
 let sketch3D = function(p) {
@@ -61,63 +56,26 @@ let sketch3D = function(p) {
     font = p.loadFont('./Roboto/Roboto-Black.ttf');
   }
   p.setup = function() {
+    // basic setting
     p.createCanvas(p.windowWidth, sketch3DHeight, p.WEBGL).parent('3d-container'); // Create a 3D canvas
+    
     cam1 = p.createCamera();
     p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
-
     // Set the initial camera position and look at a specific point
     cam1.setPosition(200, -300, 500); // Adjust the position (x, y, z) as needed
     cam1.lookAt(0, 0, 0); // Point the camera at the origin
 
-
+    // set the tone.synth
     noteBoxSynth = new Tone.Synth();
     noteBoxSynth.oscillator.type = "sine";
     noteBoxSynth.toMaster();
 
-    // Set colors
-    boxColor = p.color(255, 227, 0, 100); // Initial color of the box
-    potentialBoxColor = p.color(0, 100, 255, 100); // Semi-transparent blue for the potential box
-
-    // -------------------------------------------- Set note duration select --------------------------------------------
-    // Initialize noteDurationSelect
-    noteDurationSelect = p.createSelect(); 
-    noteDurationSelect.position(10, 55);
-    let pNote = p.createP("note duration: ");
-    pNote.position(10, 15);
-    
-    // Wait until the DOM is updated
-    setTimeout(() => {
-      durationDropdown.push({
-        x: noteDurationSelect.elt.offsetLeft,
-        y: noteDurationSelect.elt.offsetTop,
-        width: noteDurationSelect.elt.offsetWidth,
-        height: noteDurationSelect.elt.offsetHeight,
-      });
-    }, 100);
-    
-    // Add duration to dropdown options.
-    for (let duration of note_duration) {
-      noteDurationSelect.option(duration);
-    }
-    // Set the default value
-    noteDurationSelect.selected(note_duration[0]);
-
-    // Handle duration select change
-    noteDurationSelect.changed(() => {
-      if (currentChoosedBox) {
-        currentChoosedBox.isChoosed = true;
-        selectedDuration = parseFloat(noteDurationSelect.value());
-        currentChoosedBox.duration = selectedDuration;
-      }
-    });
-
-
     // -------------------------------------------- Create button --------------------------------------------
     let button = p.createButton('▶︎');
     button.mousePressed(playNote);
-    button.position(400, 55);
+    button.position(1300, 105);
 
-    // Add the initial box to the newBoxes array
+    // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, 60); // Initialize the default box
     noteBoxes.push(initialBox);
   }
@@ -125,149 +83,97 @@ let sketch3D = function(p) {
   p.draw = function() {
     p.textFont(font);
     p.background(210);
+    setCameraArguments(p);
 
+    // -------------------------------------------- set the orbit control --------------------------------------------
+    // Only if no box is chosen, enable orbit control
     let boxChoosed = false;
     for (let i = 0; i < noteBoxes.length; i++) {
       if (noteBoxes[i].isChoosed) {
         boxChoosed = true;
       }
     }
-    // Only if no box is chosen, enable orbit control
     if (!boxChoosed) {
       p.orbitControl(3);
     }
 
-    // -------------------------------------------- Set the camera and related argument --------------------------------------------
-    // Pan: Cam rotation about y-axis (Left Right)
-    azimuth = -p.atan2(cam1.eyeZ - cam1.centerZ, cam1.eyeX - cam1.centerX);
-    // Tilt: Cam rotation about z-axis (Up Down)
-    zenith = -p.atan2(cam1.eyeY - cam1.centerY, p.dist(cam1.eyeX, cam1.eyeZ, cam1.centerX, cam1.centerZ));
-    f = p.height * 4.3 / 5;
-    x = [-1, (p.mouseY - p.height / 2) / f, -(p.mouseX - p.width / 2) / f];
-    R = math.multiply(Rz(-zenith), Ry(azimuth));
-    x = math.multiply(x, R);
-    xMag = p.dist(0, 0, 0, x._data[0], x._data[1], x._data[2]);
-
-    // -------------------------------------------- set the duration select --------------------------------------------
-    selectedDuration = parseFloat(noteDurationSelect.value());
-
-    // -------------------------------------------- Draw all boxes --------------------------------------------
-    noteBoxes.forEach(box => {
-      // Always detect the latest generated box
-      detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
-      box.drawBox(p);
-    });
-
     // -------------------------------------------- Draw the trackBall --------------------------------------------
-    // for (let i = 0; i < noteBoxes.length; i++) {
-    //   let currentBox = noteBoxes[i];
-    //   let moveDirection;
-    //   let distance;
-    //   let currentTrackBall;
-    //   let note_duration = convertDurationToToneJS(currentBox.duration);
-    //   const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-    //   //let targetPosition;
-    //   //let nextPitch;
-  
-      
-    //   if (currentBox.isActivate) {
-    //     if (trackBalls.length < i + 1) {
-    //       // set the trackBall move direction and move distance 
-    //       if (noteBoxes.length > 1 && i < noteBoxes.length - 1) {
-    //         let nextBox = noteBoxes[i + 1];
-    //         //targetPosition = nextBox.position
-    //         //nextPitch = nextBox.pitch;
-            
-    //         ({ moveDirection, distance } = getMoveDirectionAndDistance(currentBox, nextBox));
-    //         currentTrackBall = new TrackBall(currentBox, nextBox, note_duration_ms / 1000, moveDirection, distance);
-    //         trackBalls.push(currentTrackBall);
-    //        } 
-    //       //else {
-    //         // Set default
-    //         //moveDirection = BoxSide.RIGHT;
-    //         //distance = currentBox.duration * baseWidth;
-    //         //targetPosition = p.createVector(0, 0, 0);
-    //         //nextPitch = 60;
+    setDefaultTrackBall(p);
 
-    //       //}
-    //     } else {
-    //       trackBalls[i].updatePosition();
-    //     }
-    //   }
-    //   // Only display TrackBall if it exists
-    //   if (trackBalls[i]) {
-    //     trackBalls[i].display(p);
-    //   }
-    // }
-      
-      for (let i = 0; i < noteBoxes.length; i++ ){
-        // for each track, set 1 trackball
-        let currentBox = noteBoxes[i];
-        let note_duration = convertDurationToToneJS(currentBox.duration);
-        let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-        let nextBox;
-        let moveDirection;
+    // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
+    if (currentChoosedBox) {
+      // for each choosed box, reset noteDuraions
+      noteDurations = [];
+      noteDurations = setNoteDurations(currentChoosedBox);
 
-        if (!defaultTrackBall) {
-          defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
-        }
-
-        if (i < noteBoxes.length - 1) {
-          nextBox = noteBoxes[i + 1];
-          if (currentBox.isActivate ) {
-            moveDirection = getMoveDirection(currentBox, nextBox);
-            console.log(`d: ${moveDirection}`)
-            defaultTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
-          }
-        }
-        
-          defaultTrackBall.display(p);
-        
-
-
+      for (let duration of noteDurations) {
+        duration.display(p);
       }
-      
-
-    function getMoveDirection(currentBox, nextBox) {
-      let moveDirection;
-      let distance;
-      
-      if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
-        moveDirection = BoxSide.BACK;
-        //distance = baseWidth;
-      } else if (nextBox.position.x > currentBox.position.x) {
-        moveDirection = BoxSide.RIGHT;
-        //distance = currentBox.duration * baseWidth;
-      } else if (nextBox.position.x < currentBox.position.x) {
-        moveDirection = BoxSide.LEFT;
-        //distance = currentBox.duration * baseWidth;
-      } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
-        moveDirection = BoxSide.FRONT;
-        //distance = baseWidth;
-      } else {
-        // Set default
-        moveDirection = BoxSide.RIGHT;
-        //distance = currentBox.duration * baseWidth;
-      }
-      return moveDirection;
-      //return { moveDirection, distance };
     }
 
     // -------------------------------------------- Draw the coordinate axes --------------------------------------------
-    p.push();
-    p.stroke(255, 255, 255);
-    p.line(-550, 0, 0, 550, 0, 0);
-    p.stroke(255, 255, 255);
-    p.line(0, -550, 0, 0, 550, 0);
-    p.stroke(255, 255, 255);
-    p.line(0, 0, -550, 0, 0, 550);
-    p.pop();
+    drawCoordinate(p);
+  }
+
+  function setDefaultTrackBall(p) {
+    for (let i = 0; i < noteBoxes.length; i++ ){
+      // for each track, set 1 trackball
+      let currentBox = noteBoxes[i];
+      let note_duration = convertDurationToToneJS(currentBox.duration);
+      let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+      let nextBox;
+      let moveDirection;
+
+      if (!defaultTrackBall) {
+        defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
+      }
+
+      if (i < noteBoxes.length - 1) {
+        nextBox = noteBoxes[i + 1];
+        if (currentBox.isActivate ) {
+          moveDirection = getMoveDirection(currentBox, nextBox);
+          defaultTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
+        }
+      }
+        defaultTrackBall.display(p);
+    }
+  }
+
+  function setNoteDurations(currentChoosedBox) {
+    let noteDurations = [];
+    for (let i = 0; i < note_duration.length; i++){
+      noteDurations.push(new NoteDuration(note_duration[i], currentChoosedBox));
+    } 
+    return noteDurations;
+  }
+
+  function getMoveDirection(currentBox, nextBox) {
+    let moveDirection;
+    let distance;
+    
+    if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
+      moveDirection = BoxSide.BACK;
+      //distance = baseWidth;
+    } else if (nextBox.position.x > currentBox.position.x) {
+      moveDirection = BoxSide.RIGHT;
+      //distance = currentBox.duration * baseWidth;
+    } else if (nextBox.position.x < currentBox.position.x) {
+      moveDirection = BoxSide.LEFT;
+      //distance = currentBox.duration * baseWidth;
+    } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
+      moveDirection = BoxSide.FRONT;
+      //distance = baseWidth;
+    } else {
+      // Set default
+      moveDirection = BoxSide.RIGHT;
+      //distance = currentBox.duration * baseWidth;
+    }
+    return moveDirection;
+    //return { moveDirection, distance };
   }
   
   // Function to handle mouse clicks
   p.mousePressed = function() {
-    let overDurationDropdown = isMouseOverDropdown(durationDropdown, p);
-    
     // -------------------------------------------- Determine if any box is currently chosen --------------------------------------------
     currentChoosedBox = noteBoxes.find(box => box.isChoosed);
     let clickedBox = noteBoxes.find(box => box.isMouseOver(p));
@@ -276,25 +182,29 @@ let sketch3D = function(p) {
         noteBoxes.forEach(box => {
             box.isChoosed = (box === clickedBox);
         });
-    } else if (!overDurationDropdown && !currentNotePitch) {
+    } else if (!currentNoteDuration && !currentNotePitch) {
         // If the mouse click is not on a dropdown or piano key, deselect all boxes
         noteBoxes.forEach(box => {
             box.isChoosed = false;
         });
     }
 
-    if (overDurationDropdown && currentChoosedBox) {
+    // ------------- a new select in 3D
+    currentNoteDuration = choosedNoteDuration();
+    
+    if (currentNoteDuration && currentChoosedBox) {
       currentChoosedBox.isChoosed = true;
-      selectedDuration = parseFloat(noteDurationSelect.value());
-      currentChoosedBox.duration = selectedDuration;
-    } 
+      currentChoosedBox.duration = currentNoteDuration.duration;
+    }
+
+
 
     // -------------------------------------------- define how to generate a new box --------------------------------------------
     // Check if any box is chosen
     let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
 
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
-      if (!anyBoxChosen && !overDurationDropdown && !currentNotePitch) {
+      if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration) {
         if (!isOccupied(potentialBoxPosition)) {
             let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, baseWidth);
             noteBoxes.push(newNoteBox);
@@ -302,16 +212,14 @@ let sketch3D = function(p) {
             //potentialBoxPosition = null; // Reset potential box position
         }
     }
-
   }
-  function isMouseOverDropdown(dropdowns, p) {
-      for (let dropdown of dropdowns) {
-        if (p.mouseX >= dropdown.x && p.mouseX <= dropdown.x + dropdown.width &&
-            p.mouseY + sketch3DHeight / 2 >= dropdown.y && p.mouseY  + sketch3DHeight / 2 <= dropdown.y + dropdown.height) {
-          return true;
-        }
+
+  function choosedNoteDuration() {
+    for (let duration of noteDurations) {
+      if (duration.isMouseOver(p)) {
+        return duration;
       }
-      return false;
+    }
   }
 
   function playNote() {
@@ -546,21 +454,15 @@ function generatePotentialBoxesPositions(box, side, p) {
 
 // Function to draw a potential box
 function drawPotentialBox(position, p) {
-  boxWidth = baseWidth;
-  boxHeight = baseWidth;
+  let potentialBoxColor = p.color(0, 100, 255, 100); // Semi-transparent blue for the potential box
   
   p.push();
   p.fill(potentialBoxColor);
   p.stroke(210);
-  p.translate(position.x + boxWidth / 2, -boxHeight / 2, position.z - baseWidth / 2);
+  p.translate(position.x + baseWidth / 2, -baseWidth / 2, position.z - baseWidth / 2);
   p.box(baseWidth); // Default potential box size
   p.pop();
 }
-
-
-
-
-  
 
 // Function to check if a position is already occupied
 function isOccupied(position) {
@@ -580,8 +482,6 @@ function mouseWheel(event) {
   zoomLevel += event.delta * -0.001; // Adjust the zoom level based on the scroll amount
   zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
 }
-
-
 
 // Function to convert note duration to Tone.js notation
 function convertDurationToToneJS(duration) {
@@ -651,5 +551,35 @@ function Rz(th) {
     [-Math.sin(th), Math.cos(th), 0],
     [0, 0, 1]
   ]);
+}
+
+function drawCoordinate(p) {
+  p.push();
+  p.stroke(255, 255, 255);
+  p.line(-250, 0, 0, 250, 0, 0);
+  p.stroke(255, 255, 255);
+  p.line(0, -250, 0, 0, 250, 0);
+  p.stroke(255, 255, 255);
+  p.line(0, 0, -250, 0, 0, 250);
+  p.pop();
+}
+
+function setCameraArguments(p) {
+  // Pan: Cam rotation about y-axis (Left Right)
+  azimuth = -p.atan2(cam1.eyeZ - cam1.centerZ, cam1.eyeX - cam1.centerX);
+  // Tilt: Cam rotation about z-axis (Up Down)
+  zenith = -p.atan2(cam1.eyeY - cam1.centerY, p.dist(cam1.eyeX, cam1.eyeZ, cam1.centerX, cam1.centerZ));
+  f = p.height * 4.3 / 5;
+  x = [-1, (p.mouseY - p.height / 2) / f, -(p.mouseX - p.width / 2) / f];
+  R = math.multiply(Rz(-zenith), Ry(azimuth));
+  x = math.multiply(x, R);
+  xMag = p.dist(0, 0, 0, x._data[0], x._data[1], x._data[2]);
+
+  // -------------------------------------------- Draw all boxes --------------------------------------------
+  noteBoxes.forEach(box => {
+    // Always detect the latest generated box
+    detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
+    box.drawBox(p);
+  });
 }
 
