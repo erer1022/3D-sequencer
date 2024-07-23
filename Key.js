@@ -42,10 +42,8 @@ class Key {
   isMouseOver(p) {
     // if this note is black key
     if (this.note.includes('#')) {
-      //console.log(`this.note: ${this.note} y: ${this.y} mouseY: ${p.mouseY}`)
       return p.mouseX >= this.x && p.mouseX <= this.x + this.w && p.mouseY >= this.y && p.mouseY <= this.y + this.h;
     } else {
-      console.log(`white`)
       return p.mouseX >= this.x && p.mouseX <= this.x + this.w && p.mouseY >= this.y + blackKeyHeight && p.mouseY <= this.y + this.h;
     }
   }

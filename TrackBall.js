@@ -1,7 +1,7 @@
 class TrackBall {
   constructor(defaultPosition) {
     this.x = defaultPosition.x + baseWidth / 2;
-    this.y = - baseWidth - trackBallBase / 2;
+    this.y = - defaultPitch - trackBallBase;
     this.z = defaultPosition.z - baseWidth / 2;
     //this.isJumping = false;
     this.angle = 0;
@@ -27,7 +27,6 @@ class TrackBall {
         
         if(this.x < targetX) {
           // velocityX < 0
-          console.log(`this.x ${this.x} targetX: ${targetX}`)
           this.isJumping = true;
           this.x += velocityX;
           this.y += velocityY;
@@ -90,7 +89,7 @@ class TrackBall {
     
     p.fill(232, 202, 219, 200);
     p.stroke(232, 202, 219);
-    p.cone(trackBallBase / 2, trackBallBase);
+    p.cone(trackBallBase, trackBallBase * 2);
     p.pop();
 
     this.angle += 1 / 100;

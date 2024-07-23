@@ -20,22 +20,22 @@ class NoteDuration {
         // set color effects
         if (this.isMouseOver(p)) {
             this.displayInfo(p);
-          this.color = p.color(238, 204, 255, 150);
+          this.color = p.color(252, 227, 238, 150);
         } else {
-          this.color = p.color(200, 223, 200);
+          this.color = p.color(200, 200, 200);
         }
     
         p.fill(this.color);
-        p.translate(this.x, -this.y, this.z);
+        p.translate(this.x, -this.y * 1.5, this.z);
         p.box(this.w, this.h, baseWidth); // Adjust the box size based on the duration
         p.pop();
       }
 
       displayInfo(p) {
         p.push();
-        p.translate(this.x + this.w, -this.y, this.z);
+        p.translate(this.x + this.w, -this.y * 1.5, this.z);
         p.fill(110);
-        p.textSize(12);
+        p.textSize(20);
         p.text(`note\nduration:\n ${this.convertDurationToToneJS(this.duration)}`, 0, 0);
         p.pop();
       }
@@ -43,7 +43,7 @@ class NoteDuration {
       setPosition(p) {
         switch (this.duration) {
             case 1:
-            this.x = p.windowWidth / 4;
+            this.x = p.windowWidth / 3;
             break;
 
             case 1/2:
@@ -65,12 +65,12 @@ class NoteDuration {
       }
 
       isMouseOver(p) {
-        let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.x + this.w / 2, -this.y, this.z);
+        let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.x + this.w / 2, -this.y * 1.5, this.z);
     
         if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                    cam1.eyeY + x._data[1] * dToObj / xMag, 
                    cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                   this.x + this.w / 2, -this.y, this.z) < baseWidth / 2) {
+                   this.x + this.w / 2, -this.y * 1.5, this.z) < baseWidth / 2) {
           return true;
         } else {
           return false;

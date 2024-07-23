@@ -10,13 +10,16 @@ let defaultTrackBall;
 let default_duration = 1;
 let trackBallBase = 20;
 let zoomLevel = 1; // Variable to store the zoom level
-let baseWidth = 60;
 let whiteKeyWidth = 30;
 let blackKeyWidth = 18;
 let whiteKeyHeight = 90;
 let blackKeyHeight = 50;
 let sketch3DHeight = 700;
 let sketch2DHeight = 150;
+let defaultPitch = 60; // set to middle C
+let defaultBPM = 60; // 60 BPM means 1 beat per second
+let PPQ = 60; // Pulses Per Quarter note (1 second per quarter note)
+let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
 
 let potentialBoxPosition = null;
 
@@ -62,13 +65,11 @@ let sketch3D = function(p) {
     cam1 = p.createCamera();
     p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
     // Set the initial camera position and look at a specific point
-    cam1.setPosition(200, -300, 500); // Adjust the position (x, y, z) as needed
+    cam1.setPosition(400, -600, 1000); // Adjust the position (x, y, z) as needed
     cam1.lookAt(0, 0, 0); // Point the camera at the origin
 
     // set the tone.synth
-    noteBoxSynth = new Tone.Synth();
-    noteBoxSynth.oscillator.type = "sine";
-    noteBoxSynth.toMaster();
+    noteBoxSynth = new Tone.PolySynth().toMaster();
 
     // -------------------------------------------- Create button --------------------------------------------
     let playButton = p.createButton('▶︎');
@@ -80,7 +81,7 @@ let sketch3D = function(p) {
     deleteButton.position(1300, 165);
 
     // -------------------------------------------- set the initial box --------------------------------------------
-    initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, 60); // Initialize the default box
+    initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
     noteBoxes.push(initialBox);
   }
 
@@ -157,23 +158,17 @@ let sketch3D = function(p) {
     
     if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
       moveDirection = BoxSide.BACK;
-      //distance = baseWidth;
     } else if (nextBox.position.x > currentBox.position.x) {
       moveDirection = BoxSide.RIGHT;
-      //distance = currentBox.duration * baseWidth;
     } else if (nextBox.position.x < currentBox.position.x) {
       moveDirection = BoxSide.LEFT;
-      //distance = currentBox.duration * baseWidth;
     } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
       moveDirection = BoxSide.FRONT;
-      //distance = baseWidth;
     } else {
       // Set default
       moveDirection = BoxSide.RIGHT;
-      //distance = currentBox.duration * baseWidth;
     }
     return moveDirection;
-    //return { moveDirection, distance };
   }
   
   // Function to handle mouse clicks
@@ -201,8 +196,6 @@ let sketch3D = function(p) {
       currentChoosedBox.duration = currentNoteDuration.duration;
     }
 
-
-
     // -------------------------------------------- define how to generate a new box --------------------------------------------
     // Check if any box is chosen
     let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
@@ -210,10 +203,8 @@ let sketch3D = function(p) {
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
       if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration) {
         if (!isOccupied(potentialBoxPosition)) {
-            let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, baseWidth);
+            let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, defaultPitch);
             noteBoxes.push(newNoteBox);
-            //detectAndDrawPotentialBoxes(newNoteBox, p);
-            //potentialBoxPosition = null; // Reset potential box position
         }
     }
   }
@@ -227,48 +218,72 @@ let sketch3D = function(p) {
   }
 
   function playNote() {
-    // reset the trackBall
+    // Reset the trackBall
     defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
-    const now = Tone.now();
-    let currentTime = now;
-  
+    // Set the pulses per quarter note (PPQ)
+    Tone.Transport.PPQ = PPQ;
+    // Function to set note values if needed
+    setNoteValues();
+
+    // Iterate through each noteBox to schedule notes
     noteBoxes.forEach(box => {
         const note_pitch = midiNoteToNoteName(box.pitch);
         const note_duration = convertDurationToToneJS(box.duration);
-        const note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-  
-        // Schedule the note to be played at the correct time
-        noteBoxSynth.triggerAttackRelease(note_pitch, note_duration, currentTime);
-        
-  
-        // Schedule the activation of the box and the corresponding key
-        setTimeout(() => {
-            box.isActivate = true;
-            for (let key of keys) {
-                if (midiNameToNumber(key.note) == box.pitch) {
-                    key.isActivate = true;
-                }
-            }
-        }, (currentTime - now) * 1000);
-  
-        // Schedule the deactivation of the box and the corresponding key
-        setTimeout(() => {
-            box.isActivate = false;
-            for (let key of keys) {
-                if (midiNameToNumber(key.note) == box.pitch) {
-                    key.isActivate = false;
-                }
-            }
-        }, (currentTime - now) * 1000 + note_duration_ms);
-  
-        // Increment the currentTime by the duration of the note
-        currentTime += Tone.Time(note_duration).toSeconds();
+
+        // Create a Tone.Part for each noteBox
+        var part = new Tone.Part(function(time, value) {
+            // Schedule the synth to play the note with the specified parameters
+            noteBoxSynth.triggerAttackRelease(value.name, value.duration, time);
+
+            activateVisualEffect(box);
+            // Schedule the deactivation of the visual effect when the note ends
+            setTimeout(() => {
+                deactivateVisualEffect(box);
+            }, Tone.Time(value.duration).toMilliseconds());
+        }, [{
+            time: Tone.Time(box.ticks, 'i').toSeconds(),
+            name: note_pitch,
+            duration: note_duration
+        }]).start(); // Start the part to begin scheduling events
     });
-  }
+
+    // Start the Tone.Transport to begin playback
+    Tone.Transport.start();
+}
   
   // Helper function to convert Tone.js duration to milliseconds
   Tone.Time.prototype.toMilliseconds = function() {
     return this.toSeconds() * 1000;
+  }
+
+  function activateVisualEffect(box) {
+    // Activate the visual effect when the note is played
+    box.isActivate = true;
+    for (let key of keys) {
+        if (midiNameToNumber(key.note) == box.pitch) {
+            key.isActivate = true;
+        }
+    }
+  }
+
+  function deactivateVisualEffect(box) {
+    box.isActivate = false;
+    for (let key of keys) {
+        if (midiNameToNumber(key.note) == box.pitch) {
+            key.isActivate = false;
+        }
+    }
+  }
+
+  function setNoteValues() {
+    let cumulativeTicks = 0;
+    noteBoxes.forEach(box => {
+      box.ticks = cumulativeTicks + "i";
+      // the default baseWidth is set to a whole note => 4 * PPQ, 
+      // if box.duration = 1, baseWidth = 4 * 60 = 240, so the noteDurationInTicks will be 240
+      let noteDurationInTicks = box.duration * baseWidth;
+      cumulativeTicks += noteDurationInTicks;
+    });
   }
 
   function deleteLatestBox() {
@@ -463,13 +478,13 @@ function generatePotentialBoxesPositions(box, side, p) {
 
 // Function to draw a potential box
 function drawPotentialBox(position, p) {
-  let potentialBoxColor = p.color(0, 100, 255, 100); // Semi-transparent blue for the potential box
+  let potentialBoxColor = p.color(200, 200, 200, 100); // Semi-transparent blue for the potential box
   
   p.push();
   p.fill(potentialBoxColor);
   p.stroke(210);
-  p.translate(position.x + baseWidth / 2, -baseWidth / 2, position.z - baseWidth / 2);
-  p.box(baseWidth); // Default potential box size
+  p.translate(position.x + baseWidth / 2, -defaultPitch / 2, position.z - baseWidth / 2);
+  p.box(baseWidth, defaultPitch, baseWidth); // Default potential box size
   p.pop();
 }
 

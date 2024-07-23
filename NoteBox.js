@@ -22,16 +22,16 @@ class NoteBox {
       // set color effects
       if (this.isMouseOver(p)) {
         this.displayInfo(p);
-        this.color = p.color(250, 232, 92, 150);
+        this.color = p.color(252, 227, 238, 150);
       } else if (this.isChoosed) {
         p.stroke(255);
         p.strokeWeight(2);
-        this.color = p.color(250, 232, 92, 150);
+        this.color = p.color(252, 227, 238, 150);
       } else if (this.isActivate) {
         this.color = p.color(203, 223, 247, 150);
         this.displayInfo(p);
       } else {
-        this.color = p.color(200, 223, 255 - this.pitch);
+        this.color = p.color(212, 231, 250);
       }
   
       p.fill(this.color);
@@ -49,7 +49,8 @@ class NoteBox {
       // Convert 3D coordinates to screen coordinates
       let position = p.createVector(this.position.x + boxWidth / 2, this.position.y - boxHeight / 2, this.position.z - baseWidth / 2);
       p.translate(position.x, position.y, position.z);
-      p.fill(0);
+      p.fill(110);
+      p.textSize(25);
       p.text(`${this.midiNoteToNoteName(this.pitch)} \n${this.duration}`, 0, 0);
       p.pop();
     }
