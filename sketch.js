@@ -78,17 +78,38 @@ let sketch3D = function(p) {
 
     let deleteButton = p.createButton('Delete note box 📦');
     deleteButton.mousePressed(deleteLatestBox);
-    deleteButton.position(1300, 165);
+    deleteButton.position(1300, 155);
+
+    let newTrackBallButton = p.createButton('⚽️ Create a new track ball on the same track');
+    newTrackBallButton.mousePressed(() => createNewTrackBall(p));
+    newTrackBallButton.position(1300, 205);
 
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
     noteBoxes.push(initialBox);
   }
 
+  function createNewTrackBall(p) {
+    drawPotentialTrackBall(p);
+  }
+
+  function drawPotentialTrackBall(p) {
+    noteBoxes.forEach(box => {
+        box.isAddingNewTrackBall = true;
+    });
+  }
+
   p.draw = function() {
     p.textFont(font);
     p.background(210);
     setCameraArguments(p);
+
+    // -------------------------------------------- Draw all boxes --------------------------------------------
+    noteBoxes.forEach(box => {
+      // Always detect the latest generated box
+      detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
+      box.drawBox(p);
+    });
 
     // -------------------------------------------- set the orbit control --------------------------------------------
     // Only if no box is chosen, enable orbit control
@@ -104,6 +125,9 @@ let sketch3D = function(p) {
 
     // -------------------------------------------- Draw the trackBall --------------------------------------------
     setDefaultTrackBall(p);
+    trackBalls.forEach(ball => {
+      ball.display(p);
+    })
 
     // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
     if (currentChoosedBox) {
@@ -131,6 +155,7 @@ let sketch3D = function(p) {
 
       if (!defaultTrackBall) {
         defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
+        trackBalls.push(defaultTrackBall);
       }
 
       if (i < noteBoxes.length - 1) {
@@ -196,12 +221,23 @@ let sketch3D = function(p) {
       currentChoosedBox.duration = currentNoteDuration.duration;
     }
 
+    // -------------------------------------------- define how to generate a new trackball --------------------------------------------
+    let anyBoxForPotentialTrackBall = noteBoxes.find(box => box.isAddingNewTrackBall && box.isMouseOver(p));
+    if (anyBoxForPotentialTrackBall) {
+      let newTrackBall = new TrackBall(anyBoxForPotentialTrackBall.position);
+      trackBalls.push(newTrackBall);
+      // after adding a new trackball, reset all the box's argument
+      noteBoxes.forEach(box => {
+        box.isAddingNewTrackBall = false;
+      });
+    }
+
     // -------------------------------------------- define how to generate a new box --------------------------------------------
     // Check if any box is chosen
     let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
 
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
-      if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration) {
+      if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration && !anyBoxForPotentialTrackBall) {
         if (!isOccupied(potentialBoxPosition)) {
             let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, defaultPitch);
             noteBoxes.push(newNoteBox);
@@ -218,7 +254,7 @@ let sketch3D = function(p) {
   }
 
   function playNote() {
-    // Reset the trackBall
+    // Reset the default trackBall
     defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
     // Set the pulses per quarter note (PPQ)
     Tone.Transport.PPQ = PPQ;
@@ -598,12 +634,5 @@ function setCameraArguments(p) {
   R = math.multiply(Rz(-zenith), Ry(azimuth));
   x = math.multiply(x, R);
   xMag = p.dist(0, 0, 0, x._data[0], x._data[1], x._data[2]);
-
-  // -------------------------------------------- Draw all boxes --------------------------------------------
-  noteBoxes.forEach(box => {
-    // Always detect the latest generated box
-    detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
-    box.drawBox(p);
-  });
 }
 

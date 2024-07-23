@@ -92,6 +92,6 @@ class TrackBall {
     p.cone(trackBallBase, trackBallBase * 2);
     p.pop();
 
-    this.angle += 1 / 100;
+    //this.angle += 1 / 100;
   }
 }

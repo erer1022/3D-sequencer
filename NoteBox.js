@@ -7,6 +7,7 @@ class NoteBox {
       this.color = null;
       this.isActivate = false;
       this.selected = false;
+      this.isAddingNewTrackBall = false;
     }
   
     // Function to draw a box at a given position
@@ -18,6 +19,10 @@ class NoteBox {
       
       let boxWidth = baseWidth * this.duration;
       let boxHeight = this.pitch;
+
+      if (this.isAddingNewTrackBall && this.isMouseOver(p)) {
+        this.drawPotentialTrackBall(p);
+      }
   
       // set color effects
       if (this.isMouseOver(p)) {
@@ -39,6 +44,17 @@ class NoteBox {
       p.box(boxWidth, boxHeight, baseWidth); // Adjust the box size based on the duration
       p.pop();
     }
+
+    drawPotentialTrackBall(p) {
+      let Color = p.color(200, 200, 200, 100); // Semi-transparent blue for the potential box
+        p.push();
+        p.fill(Color);
+        p.stroke(210);
+        p.translate(this.position.x + baseWidth / 2, -defaultPitch - trackBallBase, this.position.z - baseWidth / 2);
+        p.cone(trackBallBase, trackBallBase * 2); // Default potential box size
+        p.pop();
+    }
+
   
     displayInfo(p) {
       let boxWidth = baseWidth * this.duration;
