@@ -15,8 +15,8 @@ let whiteKeyWidth = 30;
 let blackKeyWidth = 18;
 let whiteKeyHeight = 90;
 let blackKeyHeight = 50;
-let sketch3DHeight = 600;
-let sketch2DHeight = 250;
+let sketch3DHeight = 700;
+let sketch2DHeight = 150;
 
 let potentialBoxPosition = null;
 
@@ -296,7 +296,7 @@ let sketch2D = function(p) {
   p.draw = function() {
     p.textFont(font);
     p.background(210);
-    isMouseOverKeyboard = p.mouseX >= 0 && p.mouseX <= keys.length * whiteKeyWidth && p.mouseY >= 100 && p.mouseY <= 100 + 90;
+    isMouseOverKeyboard = p.mouseX >= 0 && p.mouseX <= keys.length * whiteKeyWidth && p.mouseY >= 30 && p.mouseY <= 30 + whiteKeyHeight;
     keyboardEffects(p);
   }
 
@@ -312,7 +312,8 @@ let sketch2D = function(p) {
         let isBlack = note.includes('#');
         
         if (!isBlack) {
-          keys.push(new Key(note + octave, whiteX, 100, whiteKeyWidth, whiteKeyHeight, p.color(255, 255, 255)));
+          // constructor(note, x, y, w, h, color)
+          keys.push(new Key(note + octave, whiteX, 30, whiteKeyWidth, whiteKeyHeight, p.color(255, 255, 255)));
           whiteX += whiteKeyWidth;
         }
       }
@@ -327,7 +328,7 @@ let sketch2D = function(p) {
         
         if (isBlack) {
           let blackX = whiteX - blackKeyWidth / 2;
-          keys.push(new Key(note + octave, blackX, 100, blackKeyWidth, blackKeyHeight, p.color(0, 0, 0)));
+          keys.push(new Key(note + octave, blackX, 30, blackKeyWidth, blackKeyHeight, p.color(0, 0, 0)));
         }
 
         if (!isBlack) {

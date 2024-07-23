@@ -88,8 +88,8 @@ class TrackBall {
     //  p.rotateZ(this.angle);
     // }
     
-    p.fill(252, 220, 242, 200);
-    p.stroke(252, 220, 242);
+    p.fill(232, 202, 219, 200);
+    p.stroke(232, 202, 219);
     p.cone(trackBallBase / 2, trackBallBase);
     p.pop();
 

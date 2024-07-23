@@ -19,7 +19,7 @@ class Key {
       p.fill(150);
       p.textSize(12);
       p.textAlign(p.CENTER, p.CENTER);
-      p.text(this.note, this.x + this.w / 2, this.h + 120);
+      p.text(this.note, this.x + this.w / 2, this.h + 50);
     }
   }
 
@@ -42,9 +42,11 @@ class Key {
   isMouseOver(p) {
     // if this note is black key
     if (this.note.includes('#')) {
+      //console.log(`this.note: ${this.note} y: ${this.y} mouseY: ${p.mouseY}`)
       return p.mouseX >= this.x && p.mouseX <= this.x + this.w && p.mouseY >= this.y && p.mouseY <= this.y + this.h;
     } else {
-      return p.mouseX >= this.x && p.mouseX <= this.x + this.w && p.mouseY >= this.y && p.mouseY <= this.y + this.h;
+      console.log(`white`)
+      return p.mouseX >= this.x && p.mouseX <= this.x + this.w && p.mouseY >= this.y + blackKeyHeight && p.mouseY <= this.y + this.h;
     }
   }
 
