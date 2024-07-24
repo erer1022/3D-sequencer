@@ -6,7 +6,10 @@ let currentNotePitch;
 let currentNoteDuration;
 let currentChoosedBox;
 let defaultTrackBall;
+let trackOrderToggle;
 
+let keyboardLength = 0;
+let keyboardStartX = 200;
 let default_duration = 1;
 let trackBallBase = 20;
 let zoomLevel = 1; // Variable to store the zoom level
@@ -18,7 +21,7 @@ let sketch3DHeight = 700;
 let sketch2DHeight = 150;
 let defaultPitch = 60; // set to middle C
 let defaultBPM = 60; // 60 BPM means 1 beat per second
-let PPQ = 60; // Pulses Per Quarter note (1 second per quarter note)
+let PPQ = 48; // Pulses Per Quarter note (1 second per quarter note)
 let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
 
 let potentialBoxPosition = null;
@@ -29,6 +32,8 @@ let trackBalls = [];
 let keys = [];
 let noteDurations = [];
 let note_duration = [1, 1/2, 1/4, 1/8, 1/16];
+let tracks = []; // Array to store multiple noteBoxes arrays
+let currentTrack = 0; // Index to keep track of the current track
 
 let isMouseOverKeyboard = false;
 let showPotentialBox = false;
@@ -73,7 +78,7 @@ let sketch3D = function(p) {
 
     // -------------------------------------------- Create button --------------------------------------------
     let playButton = p.createButton('▶︎');
-    playButton.mousePressed(playNote);
+    playButton.mousePressed(() => playNote(p));
     playButton.position(1300, 105);
 
     let deleteButton = p.createButton('Delete note box 📦');
@@ -83,10 +88,11 @@ let sketch3D = function(p) {
     let newTrackBallButton = p.createButton('⚽️ Create a new track ball on the same track');
     newTrackBallButton.mousePressed(() => createNewTrackBall(p));
     newTrackBallButton.position(1300, 205);
-
+    
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
     noteBoxes.push(initialBox);
+    tracks.push(noteBoxes);
   }
 
   function createNewTrackBall(p) {
@@ -105,11 +111,18 @@ let sketch3D = function(p) {
     setCameraArguments(p);
 
     // -------------------------------------------- Draw all boxes --------------------------------------------
-    noteBoxes.forEach(box => {
-      // Always detect the latest generated box
-      detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
-      box.drawBox(p);
+    tracks.forEach(track => {
+      track.forEach(box => {
+        // Always detect the latest generated box
+        detectAndDrawPotentialBoxes(track[track.length - 1], p);
+        box.display(p);
+      });
     });
+    // noteBoxes.forEach(box => {
+    //   // Always detect the latest generated box
+    //   detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
+    //   box.display(p);
+    // });
 
     // -------------------------------------------- set the orbit control --------------------------------------------
     // Only if no box is chosen, enable orbit control
@@ -125,9 +138,14 @@ let sketch3D = function(p) {
 
     // -------------------------------------------- Draw the trackBall --------------------------------------------
     setDefaultTrackBall(p);
-    trackBalls.forEach(ball => {
-      ball.display(p);
-    })
+    updateTrackBalls(p);
+
+    
+    
+    
+    // trackBalls.forEach(ball => {
+    //   ball.display(p);
+    // })
 
     // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
     if (currentChoosedBox) {
@@ -144,30 +162,79 @@ let sketch3D = function(p) {
     drawCoordinate(p);
   }
 
+  // function updateOtherTrack() {
+  //   tracks.forEach (track => {
+  //     track.forEach (box => {
+  //       if (currentChoosedBox) {
+  //         box.isChoosed = true;
+  //         // update note duration
+  //         if (currentNoteDuration) {
+  //           box.duration = currentNoteDuration.duration;
+  //         }
+  //         // update note pitch
+  //         if (currentNotePitch) {
+  //           box.pitch = midiNameToNumber(currentNotePitch);
+  //         }
+  //       } else {
+  //         box.isChoosed = false;
+  //       }
+        
+  //     });
+  //   });
+  // }
+
+  function updateTrackBalls(p) {
+    for (let i = 0; i < tracks.length; i++) {
+      let currentTrack = tracks[i];
+      let currentTrackBall = trackBalls[i];
+
+      for (let j = 0; j < currentTrack.length; j++) {
+        let currentBox = currentTrack[j];
+        let note_duration = convertDurationToToneJS(currentBox.duration);
+        let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+        let nextBox;
+        let moveDirection;
+
+        if (j < currentTrack.length - 1) {
+          nextBox = noteBoxes[j + 1];
+          if (currentBox.isActivate ) {
+            moveDirection = getMoveDirection(currentBox, nextBox);
+            currentTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
+          }
+        }
+        currentTrackBall.display(p);
+      }
+      
+    }
+  }
+
   function setDefaultTrackBall(p) {
     for (let i = 0; i < noteBoxes.length; i++ ){
       // for each track, set 1 trackball
-      let currentBox = noteBoxes[i];
-      let note_duration = convertDurationToToneJS(currentBox.duration);
-      let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
-      let nextBox;
-      let moveDirection;
+      // let currentBox = noteBoxes[i];
+      // let note_duration = convertDurationToToneJS(currentBox.duration);
+      // let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
+      // let nextBox;
+      // let moveDirection;
 
       if (!defaultTrackBall) {
+        // for each track, the default track ball is always begin at the orgin and move on in the forward order.
         defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
+        defaultTrackBall.isReverseOrder = false;
         trackBalls.push(defaultTrackBall);
       }
 
-      if (i < noteBoxes.length - 1) {
-        nextBox = noteBoxes[i + 1];
-        if (currentBox.isActivate ) {
-          moveDirection = getMoveDirection(currentBox, nextBox);
-          defaultTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
-        }
-      }
-        defaultTrackBall.display(p);
-    }
+    //   if (i < noteBoxes.length - 1) {
+    //     nextBox = noteBoxes[i + 1];
+    //     if (currentBox.isActivate ) {
+    //       moveDirection = getMoveDirection(currentBox, nextBox);
+    //       defaultTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
+    //     }
+    //   }
+    //     defaultTrackBall.display(p);
+    // }
   }
+}
 
   function setNoteDurations(currentChoosedBox) {
     let noteDurations = [];
@@ -179,7 +246,6 @@ let sketch3D = function(p) {
 
   function getMoveDirection(currentBox, nextBox) {
     let moveDirection;
-    let distance;
     
     if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
       moveDirection = BoxSide.BACK;
@@ -200,12 +266,20 @@ let sketch3D = function(p) {
   p.mousePressed = function() {
     // -------------------------------------------- Determine if any box is currently chosen --------------------------------------------
     currentChoosedBox = noteBoxes.find(box => box.isChoosed);
+  
     let clickedBox = noteBoxes.find(box => box.isMouseOver(p));
     // If a box is clicked, choose it
     if (clickedBox) {
-        noteBoxes.forEach(box => {
-            box.isChoosed = (box === clickedBox);
+      let clickedPosition = clickedBox.position;
+      tracks.forEach(track => {
+        track.forEach(box => {
+          if (box.position.equals(clickedPosition)) {
+            box.isChoosed = true;
+          } else {
+            box.isChoosed = false;
+          }
         });
+      });
     } else if (!currentNoteDuration && !currentNotePitch) {
         // If the mouse click is not on a dropdown or piano key, deselect all boxes
         noteBoxes.forEach(box => {
@@ -213,28 +287,49 @@ let sketch3D = function(p) {
         });
     }
 
-    // ------------- a new select in 3D
-    currentNoteDuration = choosedNoteDuration();
+    // -------------------------------------------- update note duration --------------------
+    currentNoteDuration = choosedNoteDuration(p);
     
     if (currentNoteDuration && currentChoosedBox) {
       currentChoosedBox.isChoosed = true;
       currentChoosedBox.duration = currentNoteDuration.duration;
-    }
+
+      if (tracks.length > 1) {
+        tracks.forEach (track => {
+          track.forEach (box => {
+            if (box.position.equals(currentChoosedBox.position)) {
+              box.isChoosed = true;
+              box.duration = currentNoteDuration.duration;
+            }
+          });
+        });
+      }
+    } 
 
     // -------------------------------------------- define how to generate a new trackball --------------------------------------------
     let anyBoxForPotentialTrackBall = noteBoxes.find(box => box.isAddingNewTrackBall && box.isMouseOver(p));
     if (anyBoxForPotentialTrackBall) {
+      let index = noteBoxes.indexOf(anyBoxForPotentialTrackBall); 
       let newTrackBall = new TrackBall(anyBoxForPotentialTrackBall.position);
       trackBalls.push(newTrackBall);
       // after adding a new trackball, reset all the box's argument
       noteBoxes.forEach(box => {
         box.isAddingNewTrackBall = false;
       });
+      setNewTrackButton(index, p);
     }
 
     // -------------------------------------------- define how to generate a new box --------------------------------------------
     // Check if any box is chosen
     let anyBoxChosen = noteBoxes.some(box => box.isChoosed);
+
+    if (!anyBoxChosen) {
+      tracks.forEach(track => {
+        track.forEach(box => {
+            box.isChoosed = false;
+        });
+      });
+    }
 
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
       if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration && !anyBoxForPotentialTrackBall) {
@@ -243,9 +338,32 @@ let sketch3D = function(p) {
             noteBoxes.push(newNoteBox);
         }
     }
+  } 
+}
+
+
+
+
+  function setNewTrackButton(index, p) {
+    let newTrackButton = p.createButton('2 ▶︎');
+    //newTrackButton.mousePressed(playNote);
+    newTrackButton.position(1350, 105);
+
+    let newTrack = [];
+    if (trackOrderToggle.isReverse) {
+      for (let i = index; i >= 0; i--) {
+        newTrack.push(noteBoxes[i].clone(p));
+      }
+    } else {
+      for (let i = index; i < noteBoxes.length; i++) {
+        newTrack.push(noteBoxes[i].clone(p));
+      }
+    }
+    tracks.push(newTrack);
   }
 
-  function choosedNoteDuration() {
+
+  function choosedNoteDuration(p) {
     for (let duration of noteDurations) {
       if (duration.isMouseOver(p)) {
         return duration;
@@ -253,7 +371,7 @@ let sketch3D = function(p) {
     }
   }
 
-  function playNote() {
+  function playNote(p) {
     // Reset the default trackBall
     defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
     // Set the pulses per quarter note (PPQ)
@@ -261,27 +379,54 @@ let sketch3D = function(p) {
     // Function to set note values if needed
     setNoteValues();
 
-    // Iterate through each noteBox to schedule notes
-    noteBoxes.forEach(box => {
-        const note_pitch = midiNoteToNoteName(box.pitch);
-        const note_duration = convertDurationToToneJS(box.duration);
+    const synths = [];
 
-        // Create a Tone.Part for each noteBox
-        var part = new Tone.Part(function(time, value) {
-            // Schedule the synth to play the note with the specified parameters
-            noteBoxSynth.triggerAttackRelease(value.name, value.duration, time);
+    for (let i = 0; i < tracks.length; i ++) {
+      synths[i] = new Tone.PolySynth().toMaster();
+      // Iterate through each noteBox to schedule notes
+        tracks[i].forEach(box => {
+          const note_pitch = midiNoteToNoteName(box.pitch);
+          const note_duration = convertDurationToToneJS(box.duration);
 
-            activateVisualEffect(box);
-            // Schedule the deactivation of the visual effect when the note ends
-            setTimeout(() => {
-                deactivateVisualEffect(box);
-            }, Tone.Time(value.duration).toMilliseconds());
-        }, [{
-            time: Tone.Time(box.ticks, 'i').toSeconds(),
-            name: note_pitch,
-            duration: note_duration
-        }]).start(); // Start the part to begin scheduling events
-    });
+          // Create a Tone.Part for each noteBox
+          var part = new Tone.Part(function(time, value) {
+              // Schedule the synth to play the note with the specified parameters
+              synths[i].triggerAttackRelease(value.name, value.duration, time);
+
+              activateVisualEffect(box);
+              // Schedule the deactivation of the visual effect when the note ends
+              setTimeout(() => {
+                  deactivateVisualEffect(box);
+              }, Tone.Time(value.duration).toMilliseconds());
+          }, [{
+              time: Tone.Time(box.ticks, 'i').toSeconds(),
+              name: note_pitch,
+              duration: note_duration
+          }]).start(); // Start the part to begin scheduling events
+      });
+    }
+
+    // // Iterate through each noteBox to schedule notes
+    // noteBoxes.forEach(box => {
+    //     const note_pitch = midiNoteToNoteName(box.pitch);
+    //     const note_duration = convertDurationToToneJS(box.duration);
+
+    //     // Create a Tone.Part for each noteBox
+    //     var part = new Tone.Part(function(time, value) {
+    //         // Schedule the synth to play the note with the specified parameters
+    //         noteBoxSynth.triggerAttackRelease(value.name, value.duration, time);
+
+    //         activateVisualEffect(box);
+    //         // Schedule the deactivation of the visual effect when the note ends
+    //         setTimeout(() => {
+    //             deactivateVisualEffect(box);
+    //         }, Tone.Time(value.duration).toMilliseconds());
+    //     }, [{
+    //         time: Tone.Time(box.ticks, 'i').toSeconds(),
+    //         name: note_pitch,
+    //         duration: note_duration
+    //     }]).start(); // Start the part to begin scheduling events
+    // });
 
     // Start the Tone.Transport to begin playback
     Tone.Transport.start();
@@ -294,7 +439,14 @@ let sketch3D = function(p) {
 
   function activateVisualEffect(box) {
     // Activate the visual effect when the note is played
-    box.isActivate = true;
+    tracks.forEach(track => {
+      track.forEach(noteBox => {
+        if (noteBox.position.equals(box.position)) { // Use equals method to compare p5.Vector positions
+          noteBox.isActivate = true;
+        }
+      });
+    });
+    //box.isActivate = true;
     for (let key of keys) {
         if (midiNameToNumber(key.note) == box.pitch) {
             key.isActivate = true;
@@ -303,7 +455,14 @@ let sketch3D = function(p) {
   }
 
   function deactivateVisualEffect(box) {
-    box.isActivate = false;
+    tracks.forEach(track => {
+      track.forEach(noteBox => {
+        if (noteBox.position.equals(box.position)) { // Use equals method to compare p5.Vector positions
+          noteBox.isActivate = false;
+        }
+      });
+    });
+    //box.isActivate = false;
     for (let key of keys) {
         if (midiNameToNumber(key.note) == box.pitch) {
             key.isActivate = false;
@@ -312,14 +471,17 @@ let sketch3D = function(p) {
   }
 
   function setNoteValues() {
-    let cumulativeTicks = 0;
-    noteBoxes.forEach(box => {
-      box.ticks = cumulativeTicks + "i";
-      // the default baseWidth is set to a whole note => 4 * PPQ, 
-      // if box.duration = 1, baseWidth = 4 * 60 = 240, so the noteDurationInTicks will be 240
-      let noteDurationInTicks = box.duration * baseWidth;
-      cumulativeTicks += noteDurationInTicks;
-    });
+    for(let i = 0; i < tracks.length; i++) {
+      let delay = i * 480;
+      let cumulativeTicks = delay;
+      tracks[i].forEach (noteBox => {
+          noteBox.ticks = cumulativeTicks + "i";
+          // the default baseWidth is set to a whole note => 4 * PPQ, 
+          // if box.duration = 1, baseWidth = 4 * 60 = 240, so the noteDurationInTicks will be 240
+          let noteDurationInTicks = noteBox.duration * baseWidth;
+          cumulativeTicks += noteDurationInTicks;
+      });
+    }
   }
 
   function deleteLatestBox() {
@@ -328,7 +490,7 @@ let sketch3D = function(p) {
     }
   }
 
-}
+
 
 let sketch2D = function(p) {
   p.preload = function() {
@@ -342,75 +504,35 @@ let sketch2D = function(p) {
     pianoSynth.oscillator.type = "sine";
     pianoSynth.toDestination();
     setPianoKeyboard(p);
+
+    trackOrderToggle = new TrackOrder(p.windowWidth - trackBallBase * 8, sketch2DHeight / 2);
   }
 
   p.draw = function() {
     p.textFont(font);
     p.background(210);
-    isMouseOverKeyboard = p.mouseX >= 0 && p.mouseX <= keys.length * whiteKeyWidth && p.mouseY >= 30 && p.mouseY <= 30 + whiteKeyHeight;
+    
+    isMouseOverKeyboard = p.mouseX >= keyboardStartX && p.mouseX <= keyboardStartX + keyboardLength && p.mouseY >= 30 && p.mouseY <= 30 + whiteKeyHeight;
     keyboardEffects(p);
+
+    trackOrderToggle.display(p);
   }
 
-  function setPianoKeyboard(p) {
-    let whiteX = 200;
-    let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-    let numOctaves = 5; 
-    let startOctave = 3; 
-
-    for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
-      for (let i = 0; i < notes.length; i++) {
-        let note = notes[i];
-        let isBlack = note.includes('#');
-        
-        if (!isBlack) {
-          // constructor(note, x, y, w, h, color)
-          keys.push(new Key(note + octave, whiteX, 30, whiteKeyWidth, whiteKeyHeight, p.color(255, 255, 255)));
-          whiteX += whiteKeyWidth;
-        }
-      }
-    }
-
-    whiteX = 200;
-
-    for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
-      for (let i = 0; i < notes.length; i++) {
-        let note = notes[i];
-        let isBlack = note.includes('#');
-        
-        if (isBlack) {
-          let blackX = whiteX - blackKeyWidth / 2;
-          keys.push(new Key(note + octave, blackX, 30, blackKeyWidth, blackKeyHeight, p.color(0, 0, 0)));
-        }
-
-        if (!isBlack) {
-          whiteX += whiteKeyWidth;
-        }
-      }
-    }
-  }
-
-  function keyboardEffects(p) {
-    for (let key of keys) {
-      if (isMouseOverKeyboard) {
-        key.lighten(p);
-        if (key.isMouseOver(p)) {
-          key.color = p.color(147, 196, 245);
-        } 
-      } else {
-        key.darken(p);
-      }
-
-      if (key.isActivate) {
-        key.color = p.color(147, 196, 245);
-      } 
-      key.display(p);
-    }
-  }
+  
 
   p.mousePressed = function() {
       currentNotePitch = clickPianoKeyboard();
       if (currentNotePitch && currentChoosedBox) {
         resetNoteBoxPitch();
+      }
+
+      // set track order
+      if (trackOrderToggle.isMouseOver(p)) {
+        if (trackOrderToggle.isReverse) {
+          trackOrderToggle.isReverse = false;
+        } else {
+          trackOrderToggle.isReverse = true;
+        }
       }
   }
 
@@ -443,9 +565,83 @@ let sketch2D = function(p) {
 new p5(sketch3D);
 new p5(sketch2D);
 
+function setPianoKeyboard(p) {
+  let whiteX = keyboardStartX;
+  let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  let numOctaves = 5; 
+  let startOctave = 3; 
+
+  for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+    for (let i = 0; i < notes.length; i++) {
+      let note = notes[i];
+      let isBlack = note.includes('#');
+      
+      if (!isBlack) {
+        // constructor(note, x, y, w, h, color)
+        keys.push(new Key(note + octave, whiteX, 30, whiteKeyWidth, whiteKeyHeight, p.color(255, 255, 255)));
+        whiteX += whiteKeyWidth;
+      }
+    }
+  }
+
+  whiteX = 200;
+
+  for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
+    for (let i = 0; i < notes.length; i++) {
+      let note = notes[i];
+      let isBlack = note.includes('#');
+      
+      if (isBlack) {
+        let blackX = whiteX - blackKeyWidth / 2;
+        keys.push(new Key(note + octave, blackX, 30, blackKeyWidth, blackKeyHeight, p.color(0, 0, 0)));
+      }
+
+      if (!isBlack) {
+        whiteX += whiteKeyWidth;
+      }
+    }
+  }
+
+  // calculate the keyboard length
+  keys.forEach(key => {
+    if (!key.note.includes(`#`)) {
+      keyboardLength += whiteKeyWidth;
+    }
+  });
+}
+
+function keyboardEffects(p) {
+  for (let key of keys) {
+    if (isMouseOverKeyboard) {
+      key.lighten(p);
+      if (key.isMouseOver(p)) {
+        key.color = p.color(147, 196, 245);
+      } 
+    } else {
+      key.darken(p);
+    }
+
+    if (key.isActivate) {
+      key.color = p.color(147, 196, 245);
+    } 
+    key.display(p);
+  }
+}
+
 function resetNoteBoxPitch() {
   currentChoosedBox.isChoosed = true;
   currentChoosedBox.pitch = midiNameToNumber(currentNotePitch);
+
+  if (tracks.length > 1) {
+    tracks.forEach (track => {
+      track.forEach (box => {
+        if (box.position.equals(currentChoosedBox.position)) {
+          box.isChoosed = true;
+          box.pitch = midiNameToNumber(currentNotePitch);
+        }
+      });
+    });
+  }
 }
 
 

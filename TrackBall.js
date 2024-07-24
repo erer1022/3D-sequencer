@@ -5,6 +5,7 @@ class TrackBall {
     this.z = defaultPosition.z - baseWidth / 2;
     //this.isJumping = false;
     this.angle = 0;
+    this.isReverseOrder;
   }
 
   updatePosition(currentBox, nextBox, moveDirection, duration) {

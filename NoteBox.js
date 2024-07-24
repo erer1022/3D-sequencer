@@ -10,8 +10,11 @@ class NoteBox {
       this.isAddingNewTrackBall = false;
     }
   
+    clone(p) {
+      return new NoteBox (p.createVector(this.position.x, this.position.y, this.position.z), this.duration, this.pitch);
+    }
     // Function to draw a box at a given position
-    drawBox(p) {
+    display(p) {
       p.push();
       p.smooth();
       p.lights();

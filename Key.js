@@ -13,6 +13,7 @@ class Key {
 
   display(p) {
     p.fill(this.color);
+    p.strokeWeight(1);
     p.stroke(this.stroke);
     p.rect(this.x, this.y, this.w, this.h, 3);
     if (!this.note.includes('#')) {
