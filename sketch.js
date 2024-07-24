@@ -113,16 +113,14 @@ let sketch3D = function(p) {
     // -------------------------------------------- Draw all boxes --------------------------------------------
     tracks.forEach(track => {
       track.forEach(box => {
-        // Always detect the latest generated box
-        detectAndDrawPotentialBoxes(track[track.length - 1], p);
         box.display(p);
       });
     });
-    // noteBoxes.forEach(box => {
-    //   // Always detect the latest generated box
-    //   detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
-    //   box.display(p);
-    // });
+
+    noteBoxes.forEach(box => {
+      // Always detect the latest generated box
+      detectAndDrawPotentialBoxes(noteBoxes[noteBoxes.length - 1], p);
+    });
 
     // -------------------------------------------- set the orbit control --------------------------------------------
     // Only if no box is chosen, enable orbit control
@@ -334,14 +332,13 @@ let sketch3D = function(p) {
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
       if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration && !anyBoxForPotentialTrackBall) {
         if (!isOccupied(potentialBoxPosition)) {
+          console.log(`??`)
             let newNoteBox = new NoteBox(potentialBoxPosition, default_duration, defaultPitch);
             noteBoxes.push(newNoteBox);
         }
     }
   } 
 }
-
-
 
 
   function setNewTrackButton(index, p) {
@@ -382,7 +379,10 @@ let sketch3D = function(p) {
     const synths = [];
 
     for (let i = 0; i < tracks.length; i ++) {
-      synths[i] = new Tone.PolySynth().toMaster();
+      //synths[i] = new Tone.PolySynth().toMaster();
+      synths[i] = new Tone.Synth();
+      synths[i].oscillator.type = "sine";
+      synths[i].toDestination();
       // Iterate through each noteBox to schedule notes
         tracks[i].forEach(box => {
           const note_pitch = midiNoteToNoteName(box.pitch);
