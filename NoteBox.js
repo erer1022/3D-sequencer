@@ -43,7 +43,7 @@ class NoteBox {
       }
   
       p.fill(this.color);
-      p.translate(this.position.x + boxWidth / 2, -boxHeight / 2, this.position.z - baseWidth / 2);
+      p.translate(this.position.x + boxWidth / 2, this.position.y - boxHeight / 2, this.position.z - baseWidth / 2);
       p.box(boxWidth, boxHeight, baseWidth); // Adjust the box size based on the duration
       p.pop();
     }
@@ -53,7 +53,7 @@ class NoteBox {
         p.push();
         p.fill(Color);
         p.stroke(210);
-        p.translate(this.position.x + baseWidth / 2, -defaultPitch - trackBallBase, this.position.z - baseWidth / 2);
+        p.translate(this.position.x + baseWidth / 2, this.position.y - defaultPitch - trackBallBase, this.position.z - baseWidth / 2);
         p.cone(trackBallBase, trackBallBase * 2); // Default potential box size
         p.pop();
     }

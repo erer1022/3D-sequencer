@@ -1,4 +1,4 @@
-class TrackOrder {
+class TrackOrderToggle {
     constructor (x, y) {
         this.x = x;
         this.y = y;

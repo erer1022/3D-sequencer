@@ -5,8 +5,9 @@ class NoteDuration {
         this.h = noteBox.pitch;
         // always above the currentChoosedBox
         this.x;
-        this.y = noteBox.position.y + sketch3DHeight / 3;
-        this.z = noteBox.position.z
+        this.y = noteBox.position.y;
+        this.z = noteBox.position.z;
+        this.translateY;
     }
 
     // Function to draw a box at a given position
@@ -24,16 +25,29 @@ class NoteDuration {
         } else {
           this.color = p.color(200, 200, 200);
         }
+
+        if (this.y <= 0) {
+          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+        } else {
+          this.translateY = this.y - this.h - sketch3DHeight / 3;
+        }
     
         p.fill(this.color);
-        p.translate(this.x, -this.y * 1.5, this.z);
+        p.translate(this.x, this.translateY, this.z);
         p.box(this.w, this.h, baseWidth); // Adjust the box size based on the duration
         p.pop();
       }
 
       displayInfo(p) {
+        if (this.y <= 0) {
+          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+        } else {
+          this.translateY = this.y - this.h - sketch3DHeight / 3;
+        }
+
+
         p.push();
-        p.translate(this.x + this.w, -this.y * 1.5, this.z);
+        p.translate(this.x + this.w, this.translateY, this.z);
         p.fill(110);
         p.textSize(20);
         p.text(`note\nduration:\n ${this.convertDurationToToneJS(this.duration)}`, 0, 0);
@@ -65,12 +79,19 @@ class NoteDuration {
       }
 
       isMouseOver(p) {
-        let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.x + this.w / 2, -this.y * 1.5, this.z);
+
+        if (this.y <= 0) {
+          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+        } else {
+          this.translateY = this.y - this.h - sketch3DHeight / 3;
+        }
+
+        let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.x + this.w / 2, this.translateY, this.z);
     
         if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                    cam1.eyeY + x._data[1] * dToObj / xMag, 
                    cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                   this.x + this.w / 2, -this.y * 1.5, this.z) < baseWidth / 2) {
+                   this.x + this.w / 2, this.translateY, this.z) < baseWidth / 2) {
           return true;
         } else {
           return false;

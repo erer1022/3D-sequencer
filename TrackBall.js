@@ -1,7 +1,7 @@
 class TrackBall {
   constructor(defaultPosition) {
     this.x = defaultPosition.x + baseWidth / 2;
-    this.y = - defaultPitch - trackBallBase;
+    this.y = defaultPosition.y - defaultPitch - trackBallBase;
     this.z = defaultPosition.z - baseWidth / 2;
     //this.isJumping = false;
     this.angle = 0;
@@ -11,11 +11,11 @@ class TrackBall {
   updatePosition(currentBox, nextBox, moveDirection, duration) {
     // set the ball at the center of the currentBox
     let currentX = currentBox.position.x + currentBox.duration * baseWidth / 2;
-    let currentY = - currentBox.pitch - trackBallBase / 2;
+    let currentY = currentBox.position.y - currentBox.pitch - trackBallBase;
     let currentZ = currentBox.position.z - baseWidth / 2;
 
     let targetX = nextBox.position.x + nextBox.duration * baseWidth / 2;
-    let targetY = - nextBox.pitch - trackBallBase / 2;
+    let targetY = nextBox.position.y - nextBox.pitch - trackBallBase;
     let targetZ = nextBox.position.z - baseWidth / 2;
 
     let velocityX = (targetX - currentX) / duration / 60;
