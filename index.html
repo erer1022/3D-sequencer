@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.5.0/math.js"></script>
     <link rel="stylesheet" type="text/css" href="style.css">
 
+    <title>🎵 3D Music NoteBoxes</title>
     
     </style>
   </head>
@@ -22,5 +23,25 @@
 
     <div id="3d-container"></div>
     <div id="2d-container"></div>
+
+    <button id="Visualizer">V</button>
+    <button id="Sequencer">S</button>
+    <button id="Tutorial">T</button>
+
+    <script>
+      document.getElementById('Visualizer').addEventListener('click', function() {
+        window.location.href = 'midiVisualizer.html';
+      });
+
+      document.getElementById('Sequencer').addEventListener('click', function() {
+        window.location.href = 'index.html';
+      });
+
+      document.getElementById('Tutorial').addEventListener('click', function() {
+        window.location.href = 'tutorial.html';
+      });
+
+    </script>
+
   </body>
 </html>

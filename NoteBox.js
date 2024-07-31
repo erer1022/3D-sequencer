@@ -8,6 +8,7 @@ class NoteBox {
       this.isActivate = false;
       this.selected = false;
       this.isAddingNewTrackBall = false;
+      this.startTime;
     }
   
     clone(p) {

@@ -86,19 +86,28 @@ let sketch3D = function(p) {
     // -------------------------------------------- Create button --------------------------------------------
     let playButton = p.createButton('▶︎');
     playButton.mousePressed(() => playNote(p));
-    playButton.position(30, 50);
+    playButton.position(300, 720);
 
     let deleteButton = p.createButton('- Delete note box');
     deleteButton.mousePressed(deleteLatestBox);
-    deleteButton.position(30, 250);
+    deleteButton.position(1280, 250);
 
     let newTrackBallButton = p.createButton('+ add a new trackBall');
     newTrackBallButton.mousePressed(() => createNewTrackBall(p));
-    newTrackBallButton.position(30, 350);
+    newTrackBallButton.position(1280, 350);
 
     let newTrackButton = p.createButton(`+ new track`);
     newTrackButton.mousePressed(() => createNewTrack(p));
-    newTrackButton.position(30, 150);
+    newTrackButton.position(1280, 150);
+
+    let visualizerButton = p.select('#Visualizer');
+    visualizerButton.position(20, 50);
+
+    let sequencerButton = p.select('#Sequencer');
+    sequencerButton.position(20, 110);
+
+    let tutorialButton = p.select('#Tutorial');
+    tutorialButton.position(20, 170);
     
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
