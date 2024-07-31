@@ -1,6 +1,6 @@
 let font;
 let pianoSynth;
-let noteBoxSynth;
+//let noteBoxSynth;
 let initialBox;
 let currentNotePitch;
 let currentNoteDuration;
@@ -81,7 +81,7 @@ let sketch3D = function(p) {
     cam1.lookAt(0, 0, 0); // Point the camera at the origin
 
     // set the tone.synth
-    noteBoxSynth = new Tone.PolySynth().toMaster();
+    //noteBoxSynth = new Tone.PolySynth().toMaster();
 
     // -------------------------------------------- Create button --------------------------------------------
     let playButton = p.createButton('▶︎');
@@ -466,9 +466,7 @@ function setNewCloneTrack(index, trackIndex, p) {
 
     for (let i = 0; i < tracks.length; i ++) {
       //synths[i] = new Tone.PolySynth().toMaster();
-      synths[i] = new Tone.Synth();
-      synths[i].oscillator.type = "sine";
-      synths[i].toDestination();
+      synths[i] = new Tone.Synth().toDestination();
       // Iterate through each noteBox to schedule notes
         tracks[i].forEach(box => {
           const note_pitch = midiNoteToNoteName(box.pitch);
@@ -877,10 +875,7 @@ function isOccupied(potentialBoxPosition) {
   for (let track of tracks) {
     for (let box of track) {
       let boxPos = box.position;
-      let boxWidth = box.duration * baseWidth;
-
-      console.log(`boxPos.x: ${boxPos.x} Width: ${boxPos.x + boxWidth} potential: ${potentialBoxPosition.x}`)
-      console.log(`boxPos.z ${boxPos.y} pz: ${potentialBoxPosition.y}`)
+      //let boxWidth = box.duration * baseWidth;
       if (
         potentialBoxPosition.x === boxPos.x &&
         potentialBoxPosition.y === boxPos.y &&
@@ -903,11 +898,11 @@ function isOccupied(potentialBoxPosition) {
 }
 
 // Function to handle mouse wheel for zooming
-function mouseWheel(event) {
-  // Zoom in and out
-  zoomLevel += event.delta * -0.001; // Adjust the zoom level based on the scroll amount
-  zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
-}
+// function mouseWheel(event) {
+//   // Zoom in and out
+//   zoomLevel += event.delta * -0.001; // Adjust the zoom level based on the scroll amount
+//   zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
+// }
 
 // Function to convert note duration to Tone.js notation
 function convertDurationToToneJS(duration) {

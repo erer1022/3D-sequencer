@@ -1,9 +1,14 @@
 let font;
+let zoomLevel = 1;
 let sketch3DHeight = 700;
 let sketch2DHeight = 150;
-let trackDepth = -100;
+let trackDepth = -200;
 let baseWidth = 100;
 let boxDepth = 100;
+let camX = 0;
+let targetX;
+let camSpeed = 0;
+let globalBpm = 0;
 
 let CW;
 let useableMidiObject;
@@ -13,11 +18,14 @@ let ticksSpan;
 let positionSpan;
 let bpmSpan;
 let isPlaying = false;
+let useableMidiObjectParsed = false;
+
 let upButton;
 let downButton;
 let resetButton;
 let rewindButton;
 let currentTime;
+let currentTimeInSeconds;
 
 let trackNoteBoxes = [];
 let tracks = [];  // for midi data
@@ -49,27 +57,76 @@ let sketch3D = function(p) {
       cam1 = p.createCamera();
       p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
       // Set the initial camera position and look at a specific point
-      cam1.setPosition(500, -600, 800); // Adjust the position (x, y, z) as needed
-      cam1.lookAt(500, 0, 0); // Point the camera at the origin
+    //   cam1.setPosition(camX, -300, 800); // Adjust the position (x, y, z) as needed
+    //   cam1.lookAt(500, 0, 0); // Point the camera at the origin
+        
+      // Add passive wheel event listener
+      //window.addEventListener('wheel', onWheel, { passive: true });
     }
+
+    // function onWheel(event) {
+    //     // Zoom in and out
+    //     zoomLevel += event.deltaY * -0.001; // Adjust the zoom level based on the scroll amount
+    //     zoomLevel = p.constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
+    //     console.log('Zoom Level:', zoomLevel); // Optional: For debugging purposes
+    // }
 
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-        p.orbitControl(3);
+        if (!isPlaying) {
+            p.orbitControl(3);
+        }
+        
         setCameraArguments(p);
 
-        if(useableMidiObject) {
+        // Make sure the set procedure only conduct once, otherwise the computations is so heavy, it will influence the performance
+        if (useableMidiObject && !useableMidiObjectParsed) {
             setMidiNoteBoxes(p);
+            useableMidiObjectParsed = true; // Set the flag to true after parsing
+        }
+
+        if (useableMidiObject) {
             trackNoteBoxes.forEach(box => { 
-                if(box.position.x < p.windowWidth) {
-                    //console.log(`box.position.x: ${box.position.x} p.windowWidth: ${p.windowWidth}`)
+                //if (box.position.x < p.windowWidth) {
                     activateNoteBoxes();
+                    if (box.isActivate) {
+                        targetX = box.position.x;
+                    }
                     box.display(p);
-                }
+                //}
             });
         } 
+
+        //console.log(`noe: ${Tone.now()}`)
+
+        updateCurrentTimeInTicks();
+        
+        // Automatically move the camera horizontally
+        //if (isPlaying && currentTime && useableMidiObject) {
+           
+            let distance = targetX - camX;
+            let velocity = distance / 60;
+            if (velocity) {
+                camX += velocity;
+            }
+            
+            cam1.setPosition(camX, -500, 1000);
+            cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
+       //}
     }
+
+        // Function to update the current time in ticks
+    function updateCurrentTimeInTicks() {
+        currentTime = Tone.Transport.ticks;
+        // Schedule the next tick update
+        Tone.Transport.scheduleOnce(updateCurrentTimeInTicks, "+0.0.1");
+    }
+
+    // Schedule the first tick update
+    Tone.Transport.scheduleOnce(updateCurrentTimeInTicks, "+0.0.1");
+
+    
 
     
 
@@ -92,6 +149,7 @@ let sketch3D = function(p) {
               let sortedStartTimes = Object.keys(notesByStartTime).sort((a, b) => parseFloat(a) - parseFloat(b));
 
               for (let j = 0; j < sortedStartTimes.length; j++) {
+                //for (let j = 0; j < 20; j++) {
                 let startTime = sortedStartTimes[j];
                 let notes = notesByStartTime[startTime];
                 boxPosX = (startTime / useableMidiObject.header.ppq) * baseWidth;
@@ -104,6 +162,7 @@ let sketch3D = function(p) {
                   let noteDuration = note.durationTicks / useableMidiObject.header.ppq / 4;
                   let noteBox = new NoteBox(p.createVector(boxPosX, trackOffset, z), noteDuration, note.midi);
                   noteBox.startTime = note.ticks;
+                  noteBox.endTime = note.ticks + note.durationTicks;
                   trackNoteBoxes.push(noteBox);
                   z += boxDepth;
                   
@@ -111,14 +170,12 @@ let sketch3D = function(p) {
               }
           }
     }
+    
 
     function activateNoteBoxes() {
         trackNoteBoxes.forEach(box => {
-            if (box.position.x < p.windowWidth) {
-            }
-            
-            if (box.startTime <= currentTime && 
-                currentTime < box.startTime + box.duration * 4 * useableMidiObject.header.ppq) {
+            if (currentTime && box.startTime <= currentTime && 
+                currentTime < box.endTime) {
                     box.isActivate = true;
                 } else {
                     box.isActivate = false;
@@ -200,13 +257,17 @@ let sketch2D = function(p) {
         resetButton = p.createButton(`REWIND`);
         resetButton.mousePressed(rewindMusic);
         resetButton.position(100, 730);
+
+        
     }
+
 
     function rewindMusic() {
         if (Tone.Transport.state === 'started') {
             Tone.Transport.stop();
             Tone.Transport.position = '0:0:0';
             Tone.Transport.start();
+            camX = 0;
           } else {
             Tone.Transport.stop();
             Tone.Transport.position = '0:0:0';
@@ -239,7 +300,7 @@ let sketch2D = function(p) {
     function handleButtonChange(state) {
         if (state) {
             Tone.Transport.start();
-            playToggle.html('◼︎'); // Change button label to 'Pause'
+            playToggle.html('❚❚'); // Change button label to 'Pause'
         } else {
             Tone.Transport.pause();
             playToggle.html('▶︎'); // Change button label to 'Play'
@@ -294,6 +355,7 @@ let sketch2D = function(p) {
         for (let i = 0; i < midi.header.tempos.length; i++) {
           Tone.Transport.schedule(function(time) {
             Tone.Transport.bpm.value = midi.header.tempos[i].bpm + CW.tempoOffset;
+            globalBpm = midi.header.tempos[i].bpm + CW.tempoOffset;
           }, midi.header.tempos[i].ticks + "i");
         }
       
@@ -306,9 +368,7 @@ let sketch2D = function(p) {
       
         //************** Create Synths and Parts, one for each track  ********************
         for (let i = 0; i < numofVoices; i++) {
-          synths[i] = new Tone.Synth();
-          synths[i].oscillator.type = "sine";
-          synths[i].toDestination();
+          synths[i] = new Tone.Synth().toDestination();
           var part = new Tone.Part(function(time, value) {
             synths[i].triggerAttackRelease(value.name, value.duration, time, value.velocity);
           }, midi.tracks[i].notes).start();
@@ -332,7 +392,6 @@ let sketch2D = function(p) {
 
       Tone.Transport.scheduleRepeat(function(time) {
         showPosition();
-        currentTime = Tone.Transport.ticks;
         ticksSpan.html("Ticks: " + Tone.Transport.ticks);
         bpmSpan.html("BPM: " + Tone.Transport.bpm.value.toFixed());
       }, "8n");
@@ -355,12 +414,7 @@ let sketch2D = function(p) {
 new p5(sketch3D);
 new p5(sketch2D);
 
-// Function to handle mouse wheel for zooming
-function mouseWheel(event) {
-    // Zoom in and out
-    zoomLevel += event.delta * -0.001; // Adjust the zoom level based on the scroll amount
-    zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
-}
+
 
 function setCameraArguments(p) {
     // Pan: Cam rotation about y-axis (Left Right)
