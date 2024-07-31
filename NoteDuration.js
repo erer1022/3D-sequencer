@@ -91,7 +91,7 @@ class NoteDuration {
         if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                    cam1.eyeY + x._data[1] * dToObj / xMag, 
                    cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                   this.x + this.w / 2, this.translateY, this.z) < baseWidth / 2) {
+                   this.x + this.w / 2, this.translateY, this.z) < baseWidth / 3) {
           return true;
         } else {
           return false;

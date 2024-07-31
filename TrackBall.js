@@ -3,6 +3,8 @@ class TrackBall {
     this.x = defaultPosition.x + baseWidth / 2;
     this.y = defaultPosition.y - defaultPitch - trackBallBase;
     this.z = defaultPosition.z - baseWidth / 2;
+    
+
     //this.isJumping = false;
     this.angle = 0;
     this.isReverseOrder;

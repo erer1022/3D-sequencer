@@ -18,7 +18,7 @@ class NoteBox {
       p.push();
       p.smooth();
       p.lights();
-      p.stroke(225);
+      p.stroke(200);
       
       let boxWidth = baseWidth * this.duration;
       let boxHeight = this.pitch;
@@ -36,10 +36,11 @@ class NoteBox {
         p.strokeWeight(2);
         this.color = p.color(252, 227, 238, 150);
       } else if (this.isActivate) {
+        p.noStroke();
         this.color = p.color(203, 223, 247, 150);
         this.displayInfo(p);
       } else {
-        this.color = p.color(212, 231, 250);
+        this.color = p.color(210, 225, 250);
       }
   
       p.fill(this.color);

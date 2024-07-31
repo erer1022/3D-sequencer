@@ -25,6 +25,7 @@ let blackKeyHeight = 50;
 let sketch3DHeight = 700;
 let sketch2DHeight = 150;
 let defaultPitch = 60; // set to middle C
+
 let defaultBPM = 60; // 60 BPM means 1 beat per second
 let PPQ = 48; // Pulses Per Quarter note (1 second per quarter note)
 let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
@@ -85,19 +86,19 @@ let sketch3D = function(p) {
     // -------------------------------------------- Create button --------------------------------------------
     let playButton = p.createButton('▶︎');
     playButton.mousePressed(() => playNote(p));
-    playButton.position(30, 30);
+    playButton.position(30, 50);
 
-    let deleteButton = p.createButton('Delete note box 📦');
+    let deleteButton = p.createButton('- Delete note box');
     deleteButton.mousePressed(deleteLatestBox);
-    deleteButton.position(30, 70);
+    deleteButton.position(30, 250);
 
-    let newTrackBallButton = p.createButton('⚽️ Create a new track ball on the same track');
+    let newTrackBallButton = p.createButton('+ add a new trackBall');
     newTrackBallButton.mousePressed(() => createNewTrackBall(p));
-    newTrackBallButton.position(1300, 100);
+    newTrackBallButton.position(30, 350);
 
-    let newTrackButton = p.createButton(`🎁 Create a new track`);
+    let newTrackButton = p.createButton(`+ new track`);
     newTrackButton.mousePressed(() => createNewTrack(p));
-    newTrackButton.position(30, 110);
+    newTrackButton.position(30, 150);
     
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
@@ -155,7 +156,6 @@ let sketch3D = function(p) {
         if (!track.isCloneTrack && lastBox.isChoosed) {
           detectAndDrawPotentialBoxes(lastBox, p);
         }
-        
     });
 
     // -------------------------------------------- set the orbit control --------------------------------------------
@@ -221,8 +221,18 @@ let sketch3D = function(p) {
     if (!defaultTrackBall) {
       // for each track, the default track ball is always begin at the orgin and move on in the forward order.
       defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
+      //defaultTrackBall.h = defaultPitch;
       defaultTrackBall.isReverseOrder = false;
       trackBalls.push(defaultTrackBall);
+    } else {
+      // update its h, if the first noteBox's pitch get changed
+      defaultTrackBall.y = 0 - tracks[0][0].pitch - trackBallBase;
+    }
+
+    for (let i = 0; i < tracks.length; i++) {
+      let trackBall = trackBalls[i];
+      let currentTrackInitialBox = tracks[i][0];
+      trackBall.y = currentTrackInitialBox.position.y - currentTrackInitialBox.pitch - trackBallBase;
     }
   }
 
@@ -358,7 +368,7 @@ let sketch3D = function(p) {
 
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
       if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration && !anyBoxForPotentialTrackBall) {
-        if (!isOccupied(potentialBoxPosition)) {
+        if (potentialBoxPosition) {
           let trackNum;
             for (let i = 0; i < numTracks; i++) {
               if (i * trackDepth == potentialBoxPosition.y) {
@@ -426,9 +436,18 @@ function setNewCloneTrack(index, trackIndex, p) {
     }
   }
 
+  function resetTrackBallPositions() {
+    for (let i = 0; i < tracks.length; i++) {
+      let initialBox = tracks[i][0]
+      trackBalls[i].x = initialBox.position.x + initialBox.duration * baseWidth / 2;
+      trackBalls[i].y = initialBox.position.y - initialBox.pitch - trackBallBase;
+      trackBalls[i].z = initialBox.position.z - baseWidth / 2;
+    }
+  }
+
   function playNote(p) {
     // Reset the default trackBall
-    defaultTrackBall = new TrackBall(p.createVector(0, 0, 0));
+    resetTrackBallPositions();
     // Set the pulses per quarter note (PPQ)
     Tone.Transport.PPQ = PPQ;
     // Function to set note values if needed
@@ -543,7 +562,6 @@ function setNewCloneTrack(index, trackIndex, p) {
     }
   }
 
-  
 
   function deleteLatestBox() {
     
@@ -593,9 +611,6 @@ function setNewCloneTrack(index, trackIndex, p) {
                 return true;
             });
         }
-
-        
-        
 
         // Remove the last box from the main track, keep the initial box
         if (currentTrack.length > 1) {
@@ -695,7 +710,7 @@ function setPianoKeyboard(p) {
   let whiteX = keyboardStartX;
   let notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   let numOctaves = 5; 
-  let startOctave = 3; 
+  let startOctave = 2; 
 
   for (let octave = startOctave; octave < startOctave + numOctaves; octave++) {
     for (let i = 0; i < notes.length; i++) {
@@ -741,14 +756,14 @@ function keyboardEffects(p) {
     if (isMouseOverKeyboard) {
       key.lighten(p);
       if (key.isMouseOver(p)) {
-        key.color = p.color(147, 196, 245);
+        key.color = p.color(200, 218, 247);
       } 
     } else {
       key.darken(p);
     }
 
     if (key.isActivate) {
-      key.color = p.color(147, 196, 245);
+      key.color = p.color(200, 218, 247);
     } 
     key.display(p);
   }
@@ -775,35 +790,38 @@ function detectAndDrawPotentialBoxes(box, p) {
   if (box.isMouseNearBoxBackSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.BACK, p);
     showPotentialBox = true;
-    drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (box.isMouseNearBoxFrontSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.FRONT, p);
     showPotentialBox = true;
-    drawPotentialBox(potentialBoxPosition, p);
+    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (box.isMouseNearBoxLeftSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.LEFT, p);
     showPotentialBox = true;
-    drawPotentialBox(potentialBoxPosition, p);
+    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (box.isMouseNearBoxRightSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.RIGHT, p);
     showPotentialBox = true;
-    drawPotentialBox(potentialBoxPosition, p);
+    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (!showPotentialBox) {
     potentialBoxPosition = null;
   }
+
+  if (potentialBoxPosition) {
+    drawPotentialBox(potentialBoxPosition, p);
+  }
   
   showPotentialBox = false;
 }
 
-/// Function to generate potential boxes around a given position
+// Function to generate potential boxes around a given position
 function generatePotentialBoxesPositions(box, side, p) {
   let potentialPosition;
   let boxWidth = baseWidth * box.duration;
@@ -846,15 +864,33 @@ function drawPotentialBox(position, p) {
 }
 
 // Function to check if a position is already occupied
-function isOccupied(position) {
-  for (let i = 0; i < defaultTrack.length; i++) {
-    let boxPos = defaultTrack[i].position.x;
-    let boxWidth = defaultTrack[i].duration * baseWidth;
-    if (position >= boxPos && position < boxPos + boxWidth) {
-      return true;
+function isOccupied(potentialBoxPosition) {
+  for (let track of tracks) {
+    for (let box of track) {
+      let boxPos = box.position;
+      let boxWidth = box.duration * baseWidth;
+
+      console.log(`boxPos.x: ${boxPos.x} Width: ${boxPos.x + boxWidth} potential: ${potentialBoxPosition.x}`)
+      console.log(`boxPos.z ${boxPos.y} pz: ${potentialBoxPosition.y}`)
+      if (
+        potentialBoxPosition.x === boxPos.x &&
+        potentialBoxPosition.y === boxPos.y &&
+        potentialBoxPosition.z === boxPos.z
+      ) {
+        return true;
+      }
     }
   }
   return false;
+  
+  // for (let i = 0; i < tracks.length; i++) {
+  //   let boxPos = defaultTrack[i].position.x;
+  //   let boxWidth = defaultTrack[i].duration * baseWidth;
+  //   if (position >= boxPos && position < boxPos + boxWidth) {
+  //     return true;
+  //   }
+  // }
+  // return false;
 }
 
 // Function to handle mouse wheel for zooming
