@@ -1,6 +1,6 @@
 let font;
 let zoomLevel = 1;
-let sketch3DHeight = 700;
+let sketch3DHeight = 1000;
 let sketch2DHeight = 150;
 let trackDepth = -200;
 let baseWidth = 100;
@@ -27,11 +27,13 @@ let upButton;
 let downButton;
 let resetButton;
 let rewindButton;
+let builtInButton;
 let currentTime;
 let currentTimeInSeconds;
 
 let trackNoteBoxes = [];
 let tracks = [];  // for midi data
+let builtInMidis = [];
 
 
 // camera arguments
@@ -77,7 +79,8 @@ let sketch3D = function(p) {
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-        if (!isPlaying) {
+
+        if (Tone.Transport.state !== 'started') {
             p.orbitControl(3);
         }
         
@@ -102,6 +105,7 @@ let sketch3D = function(p) {
             });
         } 
 
+
         //console.log(`noe: ${Tone.now()}`)
 
         updateCurrentTimeInTicks();
@@ -116,8 +120,6 @@ let sketch3D = function(p) {
                 camX += velocityX;
             } 
 
-            
-            
             cam1.setPosition(camX, camY - 200, 1000);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
        //}
@@ -220,7 +222,6 @@ let sketch2D = function(p) {
         fileDrop.changed(() => {
             let file = fileDrop.elt.files[0];
             if (file) {
-                
                 handleMidiFile(file);
             }
         });
@@ -275,9 +276,48 @@ let sketch2D = function(p) {
         resetButton.mousePressed(rewindMusic);
         resetButton.position(100, 730);
 
-        
+        builtInButton = p.createButton(`🎼 🎵 🎶`);
+        builtInButton.mousePressed(() => displayBuiltInOptions(p));
+        builtInButton.position(p.windowWidth - 100, 60);
     }
 
+    function displayBuiltInOptions(p) {
+        let midiFiles = [
+            "001 - Albeniz I - Tango",
+            "002 - Bach, JS - Aria (Goldberg Variations)",
+            "003 - Bach, JS - Fugue (WTC Bk-1 No-21)",
+            "004 - Bach, JS - Fugue (WTC Bk-1 No-3)",
+            "005 - Bach, JS - Fugue (WTC Bk-1 No-5)",
+            "006 - Bach, JS - Fugue (WTC Bk-1 No-7)",
+            "007 - Bach, JS - Gavotte (French Suite No-5)",
+            "008-Debussy-Clair-de-lune"
+        ];
+        let positionY = 120;
+
+        midiFiles.forEach((file) => {
+            let item = p.createElement('div', file);
+            item.mouseOver(() => item.style('background-color', '#555'));
+            item.mouseOut(() => item.style('background-color', 'rgba(51, 51, 51, 0.05)'));
+            item.mousePressed(() => loadBuiltInMidi(file));
+            item.position(p.windowWidth - 350, positionY);
+            item.class('builtIns');
+            positionY += 35;
+            builtInMidis.push(item);
+        });
+    }
+
+    // function loadBuiltInMidi(file) {
+    //     let builtIn = p.loadJSON(`/builtInMidi/${file}.json`);
+    //     if (hasMidiObjectChanged(builtIn)) {
+    //         previousMidiObject = builtIn;
+    //         useableMidiObject = builtIn;
+    //         useableMidiObjectParsed = false; // Reset the flag to indicate that parsing is needed
+    //         resetToneSetup(useableMidiObject); // Reset Tone.js setup with the new MIDI object
+    //    }
+    //   makeSong(useableMidiObject);
+    // }
+
+    
 
     function rewindMusic() {
         Tone.Transport.stop();
