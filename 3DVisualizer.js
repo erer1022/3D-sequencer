@@ -6,12 +6,15 @@ let trackDepth = -200;
 let baseWidth = 100;
 let boxDepth = 100;
 let camX = 0;
+let camY = 0;
 let targetX;
+let targetY;
 let camSpeed = 0;
 let globalBpm = 0;
 
 let CW;
 let useableMidiObject;
+let previousMidiObject = null;
 let fileDrop;
 let playToggle;
 let ticksSpan;
@@ -94,6 +97,7 @@ let sketch3D = function(p) {
                         targetX = box.position.x;
                     }
                     box.display(p);
+                    camY = p.min(camY, box.position.y);
                 //}
             });
         } 
@@ -105,13 +109,16 @@ let sketch3D = function(p) {
         // Automatically move the camera horizontally
         //if (isPlaying && currentTime && useableMidiObject) {
            
-            let distance = targetX - camX;
-            let velocity = distance / 60;
-            if (velocity) {
-                camX += velocity;
-            }
+            let distanceX = targetX - camX;
+            let velocityX = distanceX / 60;
+
+            if (velocityX) {
+                camX += velocityX;
+            } 
+
             
-            cam1.setPosition(camX, -500, 1000);
+            
+            cam1.setPosition(camX, camY - 200, 1000);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
        //}
     }
@@ -131,6 +138,8 @@ let sketch3D = function(p) {
     
 
     function setMidiNoteBoxes(p) {
+        // if this function is called, reset the trackNoteBoxes
+        trackNoteBoxes = [];
         // iterate over each track
         for (let i = 0; i < useableMidiObject.tracks.length; i++) {
             let track = useableMidiObject.tracks[i];
@@ -180,10 +189,9 @@ let sketch3D = function(p) {
                 } else {
                     box.isActivate = false;
                 }
-            
-        })
+        });
     }
-    
+
 }
 
 let sketch2D = function(p) {
@@ -208,6 +216,15 @@ let sketch2D = function(p) {
 
         fileDrop = p.createFileInput(handleMidiFile);
         fileDrop.position(200, 60);
+        // Use the changed method to handle new file upload
+        fileDrop.changed(() => {
+            let file = fileDrop.elt.files[0];
+            if (file) {
+                
+                handleMidiFile(file);
+            }
+        });
+
 
         playToggle = p.createButton('▶︎');
         playToggle.position(200, 730);
@@ -263,15 +280,12 @@ let sketch2D = function(p) {
 
 
     function rewindMusic() {
+        Tone.Transport.stop();
+        Tone.Transport.position = '0:0:0';
+        camX = 0;
         if (Tone.Transport.state === 'started') {
-            Tone.Transport.stop();
-            Tone.Transport.position = '0:0:0';
             Tone.Transport.start();
-            camX = 0;
-          } else {
-            Tone.Transport.stop();
-            Tone.Transport.position = '0:0:0';
-          }
+        }
     }
 
     function changeTempo(dir) {
@@ -307,6 +321,11 @@ let sketch2D = function(p) {
         }
     }
 
+    function hasMidiObjectChanged(newMidiObject) {
+        // Simple check if the objects are different
+        return JSON.stringify(newMidiObject) !== JSON.stringify(previousMidiObject);
+    }
+
     function handleMidiFile(file) {
         if (file.type === 'audio' && file.subtype === 'midi') {
           readFile(file.file);
@@ -318,11 +337,27 @@ let sketch2D = function(p) {
       function readFile(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-          const midi = new Midi(e.target.result);
-          useableMidiObject = parseMidi(midi);
+          let midi = new Midi(e.target.result);
+          let newMidiObject = parseMidi(midi);
+          if (hasMidiObjectChanged(newMidiObject)) {
+                previousMidiObject = newMidiObject;
+                useableMidiObject = newMidiObject;
+                useableMidiObjectParsed = false; // Reset the flag to indicate that parsing is needed
+                resetToneSetup(useableMidiObject); // Reset Tone.js setup with the new MIDI object
+           }
           makeSong(useableMidiObject);
         };
         reader.readAsArrayBuffer(file);
+      }
+
+      function resetToneSetup(midi) {
+        // Stop the transport and clear all events
+        Tone.Transport.stop();
+        Tone.Transport.cancel(0);
+    
+        // Remove all parts and synths (this assumes you have a reference to them)
+        Tone.Transport.bpm.value = midi.header.tempos[0].bpm + CW.tempoOffset; // Reset the tempo to the first tempo event in the new MIDI file
+        Tone.Transport.position = '0:0:0'; // Reset the position
       }
       
       function parseMidi(midi) {
