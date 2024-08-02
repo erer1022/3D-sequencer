@@ -72,7 +72,7 @@ class NoteBox {
       p.translate(position.x, position.y, position.z);
       p.fill(110);
       p.textSize(25);
-      p.text(`${this.midiNoteToNoteName(this.pitch)} \n${this.duration}`, 0, 0);
+      p.text(`${this.midiNoteToNoteName(this.pitch)}`, 0, 0);
       p.pop();
     }
   

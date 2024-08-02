@@ -1,5 +1,6 @@
 let font;
 let zoomLevel = 1;
+let frameRate = 60;
 let sketch3DHeight = 1000;
 let sketch2DHeight = 150;
 let trackDepth = -200;
@@ -22,6 +23,7 @@ let positionSpan;
 let bpmSpan;
 let isPlaying = false;
 let useableMidiObjectParsed = false;
+let builtInOptionsVisible = false;
 
 let upButton;
 let downButton;
@@ -61,12 +63,6 @@ let sketch3D = function(p) {
       
       cam1 = p.createCamera();
       p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
-      // Set the initial camera position and look at a specific point
-    //   cam1.setPosition(camX, -300, 800); // Adjust the position (x, y, z) as needed
-    //   cam1.lookAt(500, 0, 0); // Point the camera at the origin
-        
-      // Add passive wheel event listener
-      //window.addEventListener('wheel', onWheel, { passive: true });
     }
 
     // function onWheel(event) {
@@ -79,9 +75,10 @@ let sketch3D = function(p) {
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-
-        if (Tone.Transport.state !== 'started') {
-            p.orbitControl(3);
+        p.orbitControl(3);
+        p.frameRate(frameRate);
+        if (globalBpm && globalBpm > 96) {
+            frameRate = globalBpm;
         }
         
         setCameraArguments(p);
@@ -105,24 +102,16 @@ let sketch3D = function(p) {
             });
         } 
 
-
-        //console.log(`noe: ${Tone.now()}`)
-
         updateCurrentTimeInTicks();
-        
         // Automatically move the camera horizontally
-        //if (isPlaying && currentTime && useableMidiObject) {
-           
             let distanceX = targetX - camX;
-            let velocityX = distanceX / 60;
+            let velocityX = distanceX / (frameRate - 40);
 
             if (velocityX) {
                 camX += velocityX;
             } 
-
-            cam1.setPosition(camX, camY - 200, 1000);
+            cam1.setPosition(camX, camY - 300, 1200);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
-       //}
     }
 
         // Function to update the current time in ticks
@@ -135,9 +124,6 @@ let sketch3D = function(p) {
     // Schedule the first tick update
     Tone.Transport.scheduleOnce(updateCurrentTimeInTicks, "+0.0.1");
 
-    
-
-    
 
     function setMidiNoteBoxes(p) {
         // if this function is called, reset the trackNoteBoxes
@@ -181,6 +167,8 @@ let sketch3D = function(p) {
               }
           }
     }
+
+    
     
 
     function activateNoteBoxes() {
@@ -226,43 +214,27 @@ let sketch2D = function(p) {
             }
         });
 
-
-        playToggle = p.createButton('▶︎');
-        playToggle.position(200, 730);
-        playToggle.attribute('disabled', ''); // Initially disabled
-        // Simulate enabling the button after some condition is met (e.g., after 1 second)
-        setTimeout(() => {
-            playToggle.removeAttribute('disabled');
-        }, 1000);
-
-        // Add an event listener to the button for the 'click' event
-        playToggle.mousePressed(() => {
-            if (playToggle.attribute('disabled') === null) {
-                // Toggle the state variable
-                isPlaying = !isPlaying;
-
-                // Simulate a "change" event
-                handleButtonChange(isPlaying);
-            }
-        });
-
+        // -------------------------------------------- Tone.Transportation data --------------------------------------------
         ticksSpan = p.createSpan(`Ticks: 0`);
-        ticksSpan.style(`color`, `#666e74`);
         ticksSpan.position(600, 60);
 
         // Create a span for position
         positionSpan = p.createSpan('Position 0:0');
-        positionSpan.style(`color`, `#666e74`);
         positionSpan.position(450, 60);
 
         // Create a span for BPM
         bpmSpan = p.createSpan('BPM: 0');
-        bpmSpan.style(`color`, `#666e74`);
-        bpmSpan.position(720, 60);
+        bpmSpan.position(750, 60);
+
+        // -------------------------------------------- tempo setting block
+        let tempoSpan = p.createSpan(`TEMPO SETTING:`);
+        tempoSpan.style('width', '270px');
+        tempoSpan.style('height', '90px');
+        tempoSpan.position(700, 690);
 
         upButton = p.createButton(`UP`);
         upButton.mousePressed(() => changeTempo(`UP`));
-        upButton.position(700, 730);
+        upButton.position(720, 730);
 
         downButton = p.createButton(`DOWN`);
         downButton.mousePressed(() => changeTempo(`DOWN`));
@@ -272,13 +244,57 @@ let sketch2D = function(p) {
         resetButton.mousePressed(() => changeTempo(`RESET`));
         resetButton.position(900, 730);
 
+        // -------------------------------------------- playing setting block --------------------------------------------
+        let playSpan = p.createSpan(`PLAY SETTING:`);
+        playSpan.style('width', '160px');
+        playSpan.style('height', '90px');
+        playSpan.position(80, 690);
+
+
+        playToggle = p.createButton('▶︎');
+        playToggle.position(200, 730);
+        playToggle.attribute('data-disabled', 'true');
+
+        // Adding mousePressed event listener to the button
+        playToggle.mousePressed(() => {
+            if (playToggle.elt.getAttribute('data-disabled') === 'true') {
+                isPlaying = false;
+            alert("Please upload a MIDI file or choose built-in files to play music");
+            } else {
+                isPlaying = !isPlaying;
+                handleButtonChange(isPlaying);
+            }
+        });
+
         resetButton = p.createButton(`REWIND`);
         resetButton.mousePressed(rewindMusic);
         resetButton.position(100, 730);
 
+        // -------------------------------------------- Built-ins Setting -------------------------------------------- 
         builtInButton = p.createButton(`🎼 🎵 🎶`);
-        builtInButton.mousePressed(() => displayBuiltInOptions(p));
+        builtInButton.mouseOver(() => {
+            builtInButton.style('background', '#b3cbf2')
+        })
+        builtInButton.mousePressed(() => toggleBuiltInOptions(p));
         builtInButton.position(p.windowWidth - 100, 60);
+    }
+
+    
+
+    function toggleBuiltInOptions(p) {
+        if (builtInOptionsVisible) {
+            builtInButton.style('background', '#dcd8d8');
+            hideBuiltInOptions();
+        } else {
+            builtInButton.style('background', '#b3cbf2');
+            displayBuiltInOptions(p);
+        }
+        builtInOptionsVisible = !builtInOptionsVisible;
+    }
+
+    function hideBuiltInOptions() {
+        builtInMidis.forEach(item => item.remove());
+        builtInMidis = [];
     }
 
     function displayBuiltInOptions(p) {
@@ -286,10 +302,10 @@ let sketch2D = function(p) {
             "001 - Albeniz I - Tango",
             "002 - Bach, JS - Aria (Goldberg Variations)",
             "003 - Bach, JS - Fugue (WTC Bk-1 No-21)",
-            "004 - Bach, JS - Fugue (WTC Bk-1 No-3)",
-            "005 - Bach, JS - Fugue (WTC Bk-1 No-5)",
-            "006 - Bach, JS - Fugue (WTC Bk-1 No-7)",
-            "007 - Bach, JS - Gavotte (French Suite No-5)",
+            "004-Mr-Lawrence-Merry-Christmas",
+            "005-Chopin-Nocturne-in-E-Flat-Opus-9-Nr-2",
+            "006-Debussy-Reverie",
+            "007-Canon-3",
             "008-Debussy-Clair-de-lune"
         ];
         let positionY = 120;
@@ -298,7 +314,7 @@ let sketch2D = function(p) {
             let item = p.createElement('div', file);
             item.mouseOver(() => item.style('background-color', '#555'));
             item.mouseOut(() => item.style('background-color', 'rgba(51, 51, 51, 0.05)'));
-            item.mousePressed(() => loadBuiltInMidi(file));
+            item.mousePressed(() => loadBuiltInMidi(p, file));
             item.position(p.windowWidth - 350, positionY);
             item.class('builtIns');
             positionY += 35;
@@ -306,73 +322,40 @@ let sketch2D = function(p) {
         });
     }
 
-    // function loadBuiltInMidi(file) {
-    //     let builtIn = p.loadJSON(`/builtInMidi/${file}.json`);
-    //     if (hasMidiObjectChanged(builtIn)) {
-    //         previousMidiObject = builtIn;
-    //         useableMidiObject = builtIn;
-    //         useableMidiObjectParsed = false; // Reset the flag to indicate that parsing is needed
-    //         resetToneSetup(useableMidiObject); // Reset Tone.js setup with the new MIDI object
-    //    }
-    //   makeSong(useableMidiObject);
-    // }
-
+    function loadBuiltInMidi(p, file) {
+        let fileUrl = `/builtInMidi/${file}.json`; // Construct the file URL based on the file name
+        
+        p.loadJSON(fileUrl, (json) => {
+            handleMidiJSON(json); // Use the existing function to handle the parsed MIDI JSON object
+        }, (error) => {
+            console.error("Error loading MIDI JSON file:", error);
+        });
+    }
+    
+    function handleMidiJSON(json) {
+        let newMidiObject = json;
+        if (hasMidiObjectChanged(newMidiObject)) {
+            previousMidiObject = newMidiObject;
+            useableMidiObject = newMidiObject;
+            useableMidiObjectParsed = false; // Reset the flag to indicate that parsing is needed
+            resetToneSetup(useableMidiObject); // Reset Tone.js setup with the new MIDI object
+        }
+        makeSong(useableMidiObject);
+    }
     
 
-    function rewindMusic() {
-        Tone.Transport.stop();
-        Tone.Transport.position = '0:0:0';
-        camX = 0;
-        if (Tone.Transport.state === 'started') {
-            Tone.Transport.start();
-        }
-    }
-
-    function changeTempo(dir) {
-        switch (dir) {
-          case 'UP':
-            Tone.Transport.bpm.value += 1.01;
-            CW.tempoOffset += 1.01;
-            break;
-      
-          case 'DOWN':
-            Tone.Transport.bpm.value -= 1.01;
-            CW.tempoOffset -= 1.01;
-            break;
-      
-          case 'RESET':
-            if (Tone.Transport.state === 'started') {
-              const baseTempo = Tone.Transport.bpm.value - CW.tempoOffset;
-              Tone.Transport.bpm.value = baseTempo;
-            }
-            CW.tempoOffset = 0;
-            break;
-        }
-      }
-
-    // Function to handle the simulated "change" event
-    function handleButtonChange(state) {
-        if (state) {
-            Tone.Transport.start();
-            playToggle.html('❚❚'); // Change button label to 'Pause'
-        } else {
-            Tone.Transport.pause();
-            playToggle.html('▶︎'); // Change button label to 'Play'
-        }
-    }
-
-    function hasMidiObjectChanged(newMidiObject) {
-        // Simple check if the objects are different
-        return JSON.stringify(newMidiObject) !== JSON.stringify(previousMidiObject);
-    }
+    
+    
 
     function handleMidiFile(file) {
-        if (file.type === 'audio' && file.subtype === 'midi') {
-          readFile(file.file);
+        // Check the MIME type of the file directly
+        if (file.type === 'audio/midi' || file.type === 'audio') {
+            readFile(file);
         } else {
-          alert("Please upload a MIDI file.");
+            alert("Please upload a MIDI file.");
         }
-      }
+    }
+
 
       function readFile(file) {
         const reader = new FileReader();
@@ -404,7 +387,6 @@ let sketch2D = function(p) {
         if (midi.header) {
           const midiJSON = JSON.stringify(midi, undefined, null);
           const parsedMidiObject = JSON.parse(midiJSON);
-          //console.log(`parsedMidiObject: ${midiJSON}`)
           return parsedMidiObject;
         } else {
           alert("Something went wrong when parsing your midi file");
@@ -443,33 +425,72 @@ let sketch2D = function(p) {
       
         //************** Create Synths and Parts, one for each track  ********************
         for (let i = 0; i < numofVoices; i++) {
-          synths[i] = new Tone.Synth().toDestination();
+          synths[i] = new Tone.Sampler({
+            urls: {
+                A0: "A0.mp3",
+                C1: "C1.mp3",
+                "D#1": "Ds1.mp3",
+                "F#1": "Fs1.mp3",
+                A1: "A1.mp3",
+                C2: "C2.mp3",
+                "D#2": "Ds2.mp3",
+                "F#2": "Fs2.mp3",
+                A2: "A2.mp3",
+                C3: "C3.mp3",
+                "D#3": "Ds3.mp3",
+                "F#3": "Fs3.mp3",
+                A3: "A3.mp3",
+                C4: "C4.mp3",
+                "D#4": "Ds4.mp3",
+                "F#4": "Fs4.mp3",
+                A4: "A4.mp3",
+                C5: "C5.mp3",
+                "D#5": "Ds5.mp3",
+                "F#5": "Fs5.mp3",
+                A5: "A5.mp3",
+                C6: "C6.mp3",
+                "D#6": "Ds6.mp3",
+                "F#6": "Fs6.mp3",
+                A6: "A6.mp3",
+                C7: "C7.mp3",
+                "D#7": "Ds7.mp3",
+                "F#7": "Fs7.mp3",
+                A7: "A7.mp3",
+                C8: "C8.mp3",
+            },
+            release: 1,
+            baseUrl: "https://tonejs.github.io/audio/salamander/",
+        }).toDestination();
+        
           var part = new Tone.Part(function(time, value) {
             synths[i].triggerAttackRelease(value.name, value.duration, time, value.velocity);
           }, midi.tracks[i].notes).start();
         }
       
-        setupPlayer(midi);
+        setupPlayer();
       }
 
-      function setupPlayer(midi) {
-        //let resultsText = p.select('#resultsText');
-        
-        // Set the value of the resultsText textarea
-        //resultsText.value(JSON.stringify(midi, undefined, 2));
-      
+      function setupPlayer() {
         // Enable the playToggle button
-        playToggle.removeAttribute('disabled');
+        // Enable the playToggle button by setting the custom attribute to false
+        playToggle.attribute('data-disabled', 'false');
       
         // Optionally, you can add an event listener using p5.js if needed
         // playToggle.mousePressed(togglePlay);
       }
 
-      Tone.Transport.scheduleRepeat(function(time) {
-        showPosition();
-        ticksSpan.html("Ticks: " + Tone.Transport.ticks);
-        bpmSpan.html("BPM: " + Tone.Transport.bpm.value.toFixed());
-      }, "8n");
+      // Function to handle the simulated "change" event
+    function handleButtonChange(state) {
+        if (state) {
+            Tone.Transport.start();
+            playToggle.html('❚❚'); // Change button label to 'Pause'
+            playToggle.style('background', '#b3cbf2');
+        } else {
+            Tone.Transport.pause();
+            playToggle.html('▶︎'); // Change button label to 'Play'
+            playToggle.style('background', '#dcd8d8');
+        }
+    }
       
       function showPosition() {
         var myPos = Tone.Transport.position;
@@ -478,10 +499,50 @@ let sketch2D = function(p) {
         var myBeat = Number(posArray[1]) + 1;
         positionSpan.html(myBar + ":" + myBeat);
       }
+
+      function rewindMusic() {
+        Tone.Transport.stop();
+        Tone.Transport.position = '0:0:0';
+        camX = 0;
+        if (Tone.Transport.state === 'started') {
+            Tone.Transport.start();
+        }
+    }
+
+    function changeTempo(dir) {
+        switch (dir) {
+          case 'UP':
+            Tone.Transport.bpm.value += 1.01;
+            CW.tempoOffset += 1.01;
+            break;
+      
+          case 'DOWN':
+            Tone.Transport.bpm.value -= 1.01;
+            CW.tempoOffset -= 1.01;
+            break;
+      
+          case 'RESET':
+            if (Tone.Transport.state === 'started') {
+              const baseTempo = Tone.Transport.bpm.value - CW.tempoOffset;
+              Tone.Transport.bpm.value = baseTempo;
+            }
+            CW.tempoOffset = 0;
+            break;
+        }
+      }
+
+    
+
   
     p.draw = function() {
       p.textFont(font);
       p.background(210);
+
+      Tone.Transport.scheduleRepeat(function(time) {
+        showPosition();
+        ticksSpan.html("Ticks: " + Tone.Transport.ticks);
+        bpmSpan.html("BPM: " + Tone.Transport.bpm.value.toFixed());
+      }, "8n");
     }
 }
 
@@ -489,7 +550,10 @@ let sketch2D = function(p) {
 new p5(sketch3D);
 new p5(sketch2D);
 
-
+function hasMidiObjectChanged(newMidiObject) {
+    // Simple check if the objects are different
+    return JSON.stringify(newMidiObject) !== JSON.stringify(previousMidiObject);
+}
 
 function setCameraArguments(p) {
     // Pan: Cam rotation about y-axis (Left Right)
