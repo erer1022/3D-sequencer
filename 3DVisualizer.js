@@ -97,7 +97,12 @@ let sketch3D = function(p) {
                         targetX = box.position.x;
                     }
                     box.display(p);
-                    camY = p.min(camY, box.position.y);
+                    if (globalBpm > 90) {
+                        camY = -2500;
+                    } else {
+                        camY = p.min(camY, box.position.y);
+                    }
+                    
                 //}
             });
         } 
@@ -107,7 +112,7 @@ let sketch3D = function(p) {
             let distanceX = targetX - camX;
             let velocityX = distanceX / (frameRate - 40);
 
-            if (velocityX) {
+            if (velocityX > 0) {
                 camX += velocityX;
             } 
             cam1.setPosition(camX, camY - 300, 1200);
@@ -158,6 +163,7 @@ let sketch3D = function(p) {
                 notes.forEach(note => {
                   let noteDuration = note.durationTicks / useableMidiObject.header.ppq / 4;
                   let noteBox = new NoteBox(p.createVector(boxPosX, trackOffset, z), noteDuration, note.midi);
+                  // set noteBox's startTime and endTime
                   noteBox.startTime = note.ticks;
                   noteBox.endTime = note.ticks + note.durationTicks;
                   trackNoteBoxes.push(noteBox);
@@ -299,14 +305,22 @@ let sketch2D = function(p) {
 
     function displayBuiltInOptions(p) {
         let midiFiles = [
-            "001 - Albeniz I - Tango",
-            "002 - Bach, JS - Aria (Goldberg Variations)",
-            "003 - Bach, JS - Fugue (WTC Bk-1 No-21)",
+            "001",
+            "002",
+            "003",
             "004-Mr-Lawrence-Merry-Christmas",
             "005-Chopin-Nocturne-in-E-Flat-Opus-9-Nr-2",
             "006-Debussy-Reverie",
             "007-Canon-3",
-            "008-Debussy-Clair-de-lune"
+            "008-Debussy-Clair-de-lune",
+            "009",
+            "010",
+            "011",
+            "012",
+            "013",
+            "014",
+            "015",
+            "016"
         ];
         let positionY = 120;
 
@@ -338,15 +352,13 @@ let sketch2D = function(p) {
             previousMidiObject = newMidiObject;
             useableMidiObject = newMidiObject;
             useableMidiObjectParsed = false; // Reset the flag to indicate that parsing is needed
+            isPlaying = false;
+            handleButtonChange(isPlaying);
             resetToneSetup(useableMidiObject); // Reset Tone.js setup with the new MIDI object
         }
         makeSong(useableMidiObject);
     }
     
-
-    
-    
-
     function handleMidiFile(file) {
         // Check the MIME type of the file directly
         if (file.type === 'audio/midi' || file.type === 'audio') {

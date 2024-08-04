@@ -182,10 +182,11 @@ let sketch3D = function(p) {
     // -------------------------------------------- Draw the trackBall --------------------------------------------
     setDefaultTrackBall(p);
     updateTrackBalls(p);
+    console.log(`trackBalls.length: ${trackBalls.length}`);
 
-    trackBalls.forEach(ball => {
-      ball.display(p);
-    });
+    // trackBalls.forEach(ball => {
+    //   ball.display(p);
+    // });
 
     // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
     if (currentChoosedBox) {
@@ -211,16 +212,23 @@ let sketch3D = function(p) {
         let note_duration = convertDurationToToneJS(currentBox.duration);
         let note_duration_ms = Tone.Time(note_duration).toMilliseconds();
         let nextBox;
-        let moveDirection;
+        //let moveDirection;
 
-        if (j < currentTrack.length - 1) {
-          nextBox = currentTrack[j + 1];
-          if (currentBox.isActivate ) {
-            moveDirection = getMoveDirection(currentBox, nextBox);
-            currentTrackBall.updatePosition(currentBox, nextBox, moveDirection, note_duration_ms / 1000);
+        if (currentBox.isActivate) {
+          let currentTime = p.millis();
+          let elapsedTime = currentTime - (currentBox.startTime * 1000); // convert startTime to milliseconds
+          //console.log(`currentTime: ${currentTime} elapsedTime: ${elapsedTime} note_duration_ms: ${note_duration_ms}`)
+          if (elapsedTime < note_duration_ms) {
+            if (j < currentTrack.length - 1) {
+                nextBox = currentTrack[j + 1];
+                //moveDirection = getMoveDirection(currentBox, nextBox);
+                let t = elapsedTime / note_duration_ms; // Interpolation amount (0 to 1)
+                currentTrackBall.updatePosition(p, currentBox, nextBox, t);
+            } 
           }
+          currentTrackBall.display(p); 
         }
-        currentTrackBall.display(p);
+        
       }
     }
   }
@@ -253,23 +261,23 @@ let sketch3D = function(p) {
     return noteDurations;
   }
 
-  function getMoveDirection(currentBox, nextBox) {
-    let moveDirection;
+  // function getMoveDirection(currentBox, nextBox) {
+  //   let moveDirection;
     
-    if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
-      moveDirection = BoxSide.BACK;
-    } else if (nextBox.position.x > currentBox.position.x) {
-      moveDirection = BoxSide.RIGHT;
-    } else if (nextBox.position.x < currentBox.position.x) {
-      moveDirection = BoxSide.LEFT;
-    } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
-      moveDirection = BoxSide.FRONT;
-    } else {
-      // Set default
-      moveDirection = BoxSide.RIGHT;
-    }
-    return moveDirection;
-  }
+  //   if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
+  //     moveDirection = BoxSide.BACK;
+  //   } else if (nextBox.position.x > currentBox.position.x) {
+  //     moveDirection = BoxSide.RIGHT;
+  //   } else if (nextBox.position.x < currentBox.position.x) {
+  //     moveDirection = BoxSide.LEFT;
+  //   } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
+  //     moveDirection = BoxSide.FRONT;
+  //   } else {
+  //     // Set default
+  //     moveDirection = BoxSide.RIGHT;
+  //   }
+  //   return moveDirection;
+  // }
   
   // Function to handle mouse clicks
   p.mousePressed = function() {
@@ -377,7 +385,7 @@ let sketch3D = function(p) {
 
     // Only handle potential box position if not interacting with dropdowns and no box is chosen
       if (!anyBoxChosen && !currentNotePitch && !currentNoteDuration && !anyBoxForPotentialTrackBall) {
-        if (potentialBoxPosition) {
+        if (potentialBoxPosition && !isOccupied(potentialBoxPosition)) {
           let trackNum;
             for (let i = 0; i < numTracks; i++) {
               if (i * trackDepth == potentialBoxPosition.y) {
@@ -466,7 +474,9 @@ function setNewCloneTrack(index, trackIndex, p) {
 
     for (let i = 0; i < tracks.length; i ++) {
       //synths[i] = new Tone.PolySynth().toMaster();
-      synths[i] = new Tone.Synth().toDestination();
+      synths[i] = new Tone.Synth();
+      synths[i].oscillator.type = "sine";
+      synths[i].toDestination();
       // Iterate through each noteBox to schedule notes
         tracks[i].forEach(box => {
           const note_pitch = midiNoteToNoteName(box.pitch);
@@ -489,28 +499,6 @@ function setNewCloneTrack(index, trackIndex, p) {
           }]).start(); // Start the part to begin scheduling events
       });
     }
-
-    // // Iterate through each noteBox to schedule notes
-    // defaultTrack.forEach(box => {
-    //     const note_pitch = midiNoteToNoteName(box.pitch);
-    //     const note_duration = convertDurationToToneJS(box.duration);
-
-    //     // Create a Tone.Part for each noteBox
-    //     var part = new Tone.Part(function(time, value) {
-    //         // Schedule the synth to play the note with the specified parameters
-    //         noteBoxSynth.triggerAttackRelease(value.name, value.duration, time);
-
-    //         activateVisualEffect(box);
-    //         // Schedule the deactivation of the visual effect when the note ends
-    //         setTimeout(() => {
-    //             deactivateVisualEffect(box);
-    //         }, Tone.Time(value.duration).toMilliseconds());
-    //     }, [{
-    //         time: Tone.Time(box.ticks, 'i').toSeconds(),
-    //         name: note_pitch,
-    //         duration: note_duration
-    //     }]).start(); // Start the part to begin scheduling events
-    // });
 
     // Start the Tone.Transport to begin playback
     Tone.Transport.start();
@@ -538,10 +526,12 @@ function setNewCloneTrack(index, trackIndex, p) {
 
   function activateVisualEffect(box) {
     // Activate the visual effect when the note is played
+    
     tracks.forEach(track => {
       track.forEach(noteBox => {
         if (noteBox.position.equals(box.position)) { // Use equals method to compare p5.Vector positions
           noteBox.isActivate = true;
+          noteBox.startTime = Tone.now();
         }
       });
     });
@@ -838,7 +828,7 @@ function generatePotentialBoxesPositions(box, side, p) {
       potentialPosition = p.createVector(box.position.x + boxWidth, box.position.y, box.position.z);
       break;
     case BoxSide.LEFT:
-      potentialPosition = p.createVector(box.position.x - boxWidth, box.position.y, box.position.z);
+      potentialPosition = p.createVector(box.position.x - baseWidth, box.position.y, box.position.z);
       break;
     case BoxSide.BACK:
       potentialPosition = p.createVector(box.position.x, box.position.y, box.position.z - baseWidth);

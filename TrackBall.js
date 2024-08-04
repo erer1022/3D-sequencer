@@ -3,84 +3,23 @@ class TrackBall {
     this.x = defaultPosition.x + baseWidth / 2;
     this.y = defaultPosition.y - defaultPitch - trackBallBase;
     this.z = defaultPosition.z - baseWidth / 2;
-    
-
     //this.isJumping = false;
     this.angle = 0;
     this.isReverseOrder;
   }
 
-  updatePosition(currentBox, nextBox, moveDirection, duration) {
-    // set the ball at the center of the currentBox
-    let currentX = currentBox.position.x + currentBox.duration * baseWidth / 2;
-    let currentY = currentBox.position.y - currentBox.pitch - trackBallBase;
-    let currentZ = currentBox.position.z - baseWidth / 2;
+  updatePosition(p, currentBox, nextBox, t) {
+    // Interpolate between currentBox and nextBox based on t (0 to 1)
+    this.x = p.lerp(currentBox.position.x + currentBox.duration * baseWidth / 2, nextBox.position.x + nextBox.duration * baseWidth / 2, t);
+    this.z = p.lerp(currentBox.position.z - baseWidth / 2, nextBox.position.z - baseWidth / 2, t);
 
-    let targetX = nextBox.position.x + nextBox.duration * baseWidth / 2;
-    let targetY = nextBox.position.y - nextBox.pitch - trackBallBase;
-    let targetZ = nextBox.position.z - baseWidth / 2;
-
-    let velocityX = (targetX - currentX) / duration / 60;
-    let velocityY = (targetY - currentY) / duration / 60;
-    let velocityZ = (targetZ - currentZ) / duration / 60;
-
-    
-    switch (moveDirection) {
-      case BoxSide.RIGHT:
-        
-        if(this.x < targetX) {
-          // velocityX < 0
-          this.isJumping = true;
-          this.x += velocityX;
-          this.y += velocityY;
-        } else {
-          this.isJumping = false;
-          this.x = targetX;
-          this.y = targetY;
-        }
-        break;
-
-      case BoxSide.LEFT:
-      if(this.x > targetX) {
-        // velocityX < 0
-        this.isJumping = true;
-        this.x += velocityX;
-        this.y += velocityY;
-      } else {
-        this.isJumping = false;
-        this.x = targetX;
-        this.y = targetY;
-      }
-      break;
-
-      case BoxSide.FRONT:
-        if(this.z < targetZ) {
-          this.isJumping = true;
-          this.z += velocityZ;
-          this.y += velocityY;
-        } else {
-          this.isJumping = false;
-          this.z = targetZ;
-          this.y = targetY;
-        }
-        break;
-
-      case BoxSide.BACK:
-      if(this.z > targetZ) {
-        this.isJumping = true;
-        // velocityZ < 0
-        this.z += velocityZ;
-        this.y += velocityY;
-      } else {
-        this.isJumping = false;
-        this.z = targetZ;
-        this.y = targetY;
-      }
-      break;
-
+    // Interpolate y position smoothly
+    if (t < 0.5) {
+      this.y = p.lerp(currentBox.position.y - currentBox.pitch - trackBallBase, currentBox.position.y - currentBox.pitch - trackBallBase - 60, t * 2);
+    } else {
+      this.y = p.lerp(currentBox.position.y - currentBox.pitch - trackBallBase - 60, nextBox.position.y - nextBox.pitch - trackBallBase, (t - 0.5) * 2);
     }
-    
-   }
+  }
 
   display(p) {
     //if (this.reachedTarget) return;
