@@ -182,11 +182,12 @@ let sketch3D = function(p) {
     // -------------------------------------------- Draw the trackBall --------------------------------------------
     setDefaultTrackBall(p);
     updateTrackBalls(p);
-    console.log(`trackBalls.length: ${trackBalls.length}`);
+    trackBalls.forEach(ball => {
+      ball.display(p);
+    })
+    
 
-    // trackBalls.forEach(ball => {
-    //   ball.display(p);
-    // });
+    
 
     // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
     if (currentChoosedBox) {
