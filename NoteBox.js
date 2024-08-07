@@ -75,6 +75,8 @@ class NoteBox {
       p.text(`${this.midiNoteToNoteName(this.pitch)}`, 0, 0);
       p.pop();
     }
+
+    
   
     isMouseOver(p) {
       let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.position.x + baseWidth * this.duration / 2, this.position.y - this.pitch / 2, this.position.z - baseWidth / 2);

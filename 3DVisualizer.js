@@ -200,6 +200,8 @@ let sketch2D = function(p) {
 
       let visualizerButton = p.select('#Visualizer');
       visualizerButton.position(20, 50);
+      visualizerButton.style('background', '#b3cbf2');
+      visualizerButton.style('color', '#000307');
   
       let sequencerButton = p.select('#Sequencer');
       sequencerButton.position(20, 110);

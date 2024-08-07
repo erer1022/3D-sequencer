@@ -14,18 +14,16 @@
     </style>
   </head>
   <body>
-    <script src="tutorial.js"></script>
-
-    <div id="3d-container"></div>
-    <div id="2d-container"></div>
+    <script src="NoteDurationTutorial.js"></script>
+    <script src="NoteBox.js"></script>
+    <script src="TrackBall.js"></script>
     
+    <div id="2d-container"></div>
+    <div id="3d-container"></div>
 
     <button id="Visualizer">V</button>
     <button id="Sequencer">S</button>
     <button id="Tutorial">T</button>
-
-    <button class="tutorialButton" id="NoteDurationTutorial">Note Duration Tutorial</button>
-    <button class="tutorialButton" id="NotePitchTutorial">Note Pitch Tutorial</button>
 
     <script>
       document.getElementById('Visualizer').addEventListener('click', function() {
@@ -38,14 +36,6 @@
 
       document.getElementById('Tutorial').addEventListener('click', function() {
         window.location.href = 'tutorial.html';
-      });
-
-      document.getElementById('NoteDurationTutorial').addEventListener('click', function() {
-        window.location.href = 'NoteDurationTutorial.html';
-      });
-
-      document.getElementById('NotePitchTutorial').addEventListener('click', function() {
-        window.location.href = 'NotePitchTutorial.html';
       });
 
     </script>

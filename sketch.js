@@ -105,6 +105,8 @@ let sketch3D = function(p) {
 
     let sequencerButton = p.select('#Sequencer');
     sequencerButton.position(20, 110);
+    sequencerButton.style('background', '#b3cbf2');
+    sequencerButton.style('color', '#000307');
 
     let tutorialButton = p.select('#Tutorial');
     tutorialButton.position(20, 170);
@@ -184,10 +186,7 @@ let sketch3D = function(p) {
     updateTrackBalls(p);
     trackBalls.forEach(ball => {
       ball.display(p);
-    })
-    
-
-    
+    });
 
     // -------------------------------------------- Draw 3D "note durations selectors" --------------------------------------------
     if (currentChoosedBox) {
