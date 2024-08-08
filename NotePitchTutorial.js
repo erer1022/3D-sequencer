@@ -8,7 +8,7 @@ let wholeNote;
 
 let noteBoxes = [];
 let trackBalls = [];
-let note_duration = [1, 1/2, 1/4, 1/8, 1/16];
+let note_pitch = [60, 62, 64, 65, 67, 69, 71, 72];
 let sketch3DHeight = 800;
 let sketch2DHeight = 50;
 let defaultPitch = 60;
@@ -40,7 +40,7 @@ let sketch3D = function(p) {
       p.createCanvas(p.windowWidth, sketch3DHeight, p.WEBGL).parent('3d-container'); // Create a 3D canvas
       
       cam1 = p.createCamera();
-      cam1.setPosition(0, -1400, 1000); // Adjust the position (x, y, z) as needed
+      cam1.setPosition(0, -700, 1000); // Adjust the position (x, y, z) as needed
       cam1.lookAt(0, 0, 0); // Point the camera at the origin
       p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
 
@@ -88,15 +88,16 @@ let sketch3D = function(p) {
     }
 
     function setNoteBoxesAndTrackBalls() {
-        for (let i = 0; i < note_duration.length; i++) {
+        for (let i = 0; i < 13; i++) {
             
-            let newBox = new NoteBox(p.createVector(-800 + i * 400, -700, 0), note_duration[i], defaultPitch); 
+            let newBox = new NotePitchBox(p.createVector(-600 + i * 90, -400, 0), 1/4, defaultPitch + i); 
             noteBoxes.push(newBox);
-            
+            newBox.boxHeight = defaultPitch + i * 8;
 
             let newTrackBall = new TrackBall(newBox.position);
             trackBalls.push(newTrackBall);
             newTrackBall.x = newBox.position.x;
+            newTrackBall.y = newBox.position.y - newBox.boxHeight - trackBallBase;
         } 
     }
 
@@ -186,70 +187,44 @@ let sketch2D = function(p) {
       tutorialButton.style('background', '#b3cbf2');
       tutorialButton.style('color', '#000307');
 
-      let noteDurationButton = p.select('#NotePitchTutorial');
-      noteDurationButton.position(1300, 50);
+      let noteDurationButton = p.select('#NoteDurationTutorial');
+      noteDurationButton.position(1250, 50);
 
         // -------------------------------------------- playing setting block --------------------------------------------
-        let IllustrationSpan = p.createSpan('In standard music notation, the duration (time length) of a particular note is defined by how long it lasts compared to a whole note.<br><br>A <b>whole note</b> is a note type that has the longest note duration. <br><br><br> A <b>half note</b> has half the duration of a whole note. <br><br><br><br> A <b>quarter note</b> has half the duration of a half note. <br><br><br><br>An <b>eighth note</b> has half the duration of a quarter note. It has one flag. <br><br><br><br>A <b>sixteenth note</b> has half the duration of a eighth note. It has two flags.');
-        IllustrationSpan.style('width', '1100px');
-        IllustrationSpan.style('height', '380px');
+        let IllustrationSpan = p.createSpan(`
+            The <b>PITCH</b> of a note determines how high or low it sounds. <br><br>
+            Musicians assign different letter names to these pitches: A, B, C, D, E, F, and G. <br>
+            These seven letters represent all the natural notes<br>
+             (on a keyboard, these are the <b>WHITE KEYS</b>).<br><br>
+
+            Each note name is followed by its octave number. <br>
+            Here, we are showing octave 4, the middle octave, and some notes are followed by a "#" symbol. <br>
+            A sharp sign ("#") indicates that the note is one half step higher than the natural note <br>
+            (on a keyboard, these are the <b>BLACK KEYS</b>).<br><br>
+            This illustration shows one octave, which consists of 12 notes. <br>
+            In this project, we use the <b>HEIGHT</b> of the boxes to represent the pitch of each note.
+        `);
+        IllustrationSpan.style('width', '900px');
+        IllustrationSpan.style('height', '270px');
         IllustrationSpan.style('font-size', '16px');
-        IllustrationSpan.position(200, 330);
-        let noteDuration = p.createImg('./pictures/note_duration.png', 'note duration relationships');
-        noteDuration.position(820, 400);
-        noteDuration.size(450, 320);
+        IllustrationSpan.position(230, 440);
+        let noteDuration = p.createImg('./pictures/note_pitch.png', 'note pitch relationships');
+        noteDuration.position(230, 170);
+        noteDuration.size(900, 300);
 
-        let reminderSpan = p.createSpan('Click on the box to feel the note duration!');
-        reminderSpan.position(200, 50);
+        let reminderSpan = p.createSpan('Click on the box to feel the note pitch!');
+        reminderSpan.position(200, 20);
         reminderSpan.style('background', 'transparent');
+        reminderSpan.style('font-size', '16px');
 
-        let citeSpan = p.createSpan('note pictures: By PianistHere - Own work, CC BY-SA 4.0, https://commons.wikimedia.org/w/index.php?curid=2192688 <br> https://piano-music-theory.com/2016/05/29/notes-duration-and-the-different-note-types/');
-        citeSpan.position(0, 740);
+        let citeSpan = p.createSpan('note pictures from: https://imgbin.com/');
+        citeSpan.position(0, 760);
         citeSpan.style('font-size', '10px');
         citeSpan.style('background', 'transparent');
         
 
 
-        let wholeNote = p.createImg('./pictures/wholeNote.svg', 'whole note');
-        wholeNote.position(270, 240);
-        wholeNote.size(35, 40);
-
-        let halfNote = p.createImg('./pictures/halfNote.svg', 'half note');
-        halfNote.position(500, 230);
-        halfNote.size(35, 50);
-
-        let quarterNote = p.createImg('./pictures/quarterNote.svg', 'quarter note');
-        quarterNote.position(730, 230);
-        quarterNote.size(16, 44);
-
-        let eighthNote = p.createImg('./pictures/eighthNote.svg', 'eighth note');
-        eighthNote.position(960, 230);
-        eighthNote.size(50, 44);
-
-        let sixteenthNote = p.createImg('./pictures/sixteenthNote.svg', 'sixteenth note');
-        sixteenthNote.position(1190, 230);
-        sixteenthNote.size(55, 44);
-
-
-        let wholeNoteSpan = p.createSpan('Whole Note  1');
-        wholeNoteSpan.class('noteSpan');
-        wholeNoteSpan.position(230, 280);
-
-        let halfNoteSpan = p.createSpan('half Note  1 / 2');
-        halfNoteSpan.class('noteSpan');
-        halfNoteSpan.position(460, 280);
-
-        let quarterNoteSpan = p.createSpan('quarter Note  1 / 4');
-        quarterNoteSpan.class('noteSpan');
-        quarterNoteSpan.position(680, 280);
-
-        let eighthNoteSpan = p.createSpan('eighth Note  1 / 8');
-        eighthNoteSpan.class('noteSpan');
-        eighthNoteSpan.position(930, 280);
-
-        let sixteenthNoteSpan = p.createSpan('sixteenth Note  1 / 16');
-        sixteenthNoteSpan.class('noteSpan');
-        sixteenthNoteSpan.position(1150, 280);
+    
 
     }
 
