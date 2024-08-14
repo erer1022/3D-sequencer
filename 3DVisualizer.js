@@ -37,7 +37,7 @@ let trackNoteBoxes = [];
 let tracks = [];  // for midi data
 let builtInMidis = [];
 
-
+let boxSynth;
 // camera arguments
 let cam1;
 let azimuth;
@@ -63,6 +63,8 @@ let sketch3D = function(p) {
       
       cam1 = p.createCamera();
       p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
+
+      setBoxSynth();
     }
 
     // function onWheel(event) {
@@ -117,6 +119,16 @@ let sketch3D = function(p) {
             } 
             cam1.setPosition(camX, camY - 300, 1200);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
+    }
+
+    p.mousePressed = function() {
+      for (let i = 0; i < trackNoteBoxes.length; i++) {
+        if (trackNoteBoxes[i].isMouseOver(p)) {
+          let noteName = midiNoteToNoteName(trackNoteBoxes[i].pitch);
+          let noteDuration = convertDurationToToneJS(trackNoteBoxes[i].duration);
+          boxSynth.triggerAttackRelease(noteName, noteDuration);
+        }
+      }
     }
 
         // Function to update the current time in ticks
@@ -187,6 +199,45 @@ let sketch3D = function(p) {
                 }
         });
     }
+
+    function setBoxSynth() {
+      boxSynth = new Tone.Sampler({
+        urls: {
+            A0: "A0.mp3",
+            C1: "C1.mp3",
+            "D#1": "Ds1.mp3",
+            "F#1": "Fs1.mp3",
+            A1: "A1.mp3",
+            C2: "C2.mp3",
+            "D#2": "Ds2.mp3",
+            "F#2": "Fs2.mp3",
+            A2: "A2.mp3",
+            C3: "C3.mp3",
+            "D#3": "Ds3.mp3",
+            "F#3": "Fs3.mp3",
+            A3: "A3.mp3",
+            C4: "C4.mp3",
+            "D#4": "Ds4.mp3",
+            "F#4": "Fs4.mp3",
+            A4: "A4.mp3",
+            C5: "C5.mp3",
+            "D#5": "Ds5.mp3",
+            "F#5": "Fs5.mp3",
+            A5: "A5.mp3",
+            C6: "C6.mp3",
+            "D#6": "Ds6.mp3",
+            "F#6": "Fs6.mp3",
+            A6: "A6.mp3",
+            C7: "C7.mp3",
+            "D#7": "Ds7.mp3",
+            "F#7": "Fs7.mp3",
+            A7: "A7.mp3",
+            C8: "C8.mp3",
+        },
+        release: 1,
+        baseUrl: "https://tonejs.github.io/audio/salamander/",
+    }).toDestination();
+  }
 
 }
 
@@ -603,5 +654,25 @@ function Rz(th) {
         [-Math.sin(th), Math.cos(th), 0],
         [0, 0, 1]
     ]);
+}
+
+// Function to convert note duration to Tone.js notation
+function convertDurationToToneJS(duration) {
+  const durationMap = {
+    '1': "1n",
+    '0.5': "2n",
+    '0.25': "4n",
+    '0.125': "8n",
+    '0.0625': "16n"
+  };
+  return durationMap[duration.toString()];
+}
+
+// Function to convert MIDI note number to note name
+function midiNoteToNoteName(noteNumber) {
+  const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const octave = Math.floor(noteNumber / 12) - 1;
+  const noteIndex = noteNumber % 12;
+  return noteNames[noteIndex] + octave;
 }
 

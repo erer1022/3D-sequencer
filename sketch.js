@@ -32,7 +32,6 @@ let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
 
 let potentialBoxPosition = null;
 
-let noteBoxes = []; // Array to store newly created boxes with their note_duration
 let defaultTrack = [];
 let potentialBoxes = []; // Array to store potential boxes
 let trackBalls = [];
