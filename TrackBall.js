@@ -13,11 +13,13 @@ class TrackBall {
     this.x = p.lerp(currentBox.position.x + currentBox.duration * baseWidth / 2, nextBox.position.x + nextBox.duration * baseWidth / 2, t);
     this.z = p.lerp(currentBox.position.z - baseWidth / 2, nextBox.position.z - baseWidth / 2, t);
 
+    let currentBoxHeight = defaultPitch + (currentBox.pitch - defaultPitch) * 4;
+    let nextBoxHeight = defaultPitch + (nextBox.pitch - defaultPitch) * 4
     // Interpolate y position smoothly
     if (t < 0.5) {
-      this.y = p.lerp(currentBox.position.y - currentBox.pitch - trackBallBase, currentBox.position.y - currentBox.pitch - trackBallBase - 60, t * 2);
+      this.y = p.lerp(currentBox.position.y - currentBoxHeight - trackBallBase, currentBox.position.y - currentBoxHeight - trackBallBase - 100, t * 2);
     } else {
-      this.y = p.lerp(currentBox.position.y - currentBox.pitch - trackBallBase - 60, nextBox.position.y - nextBox.pitch - trackBallBase, (t - 0.5) * 2);
+      this.y = p.lerp(currentBox.position.y - currentBoxHeight - trackBallBase - 100, nextBox.position.y - nextBoxHeight - trackBallBase, (t - 0.5) * 2);
     }
   }
 

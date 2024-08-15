@@ -22,7 +22,7 @@ class NoteBox {
       p.stroke(200);
       
       let boxWidth = baseWidth * this.duration;
-      let boxHeight = this.pitch;
+      let boxHeight = defaultPitch + (this.pitch - defaultPitch) * 4;
 
       if (this.isAddingNewTrackBall && this.isMouseOver(p)) {
         this.drawPotentialTrackBall(p);
@@ -52,10 +52,12 @@ class NoteBox {
 
     drawPotentialTrackBall(p) {
       let Color = p.color(200, 200, 200, 100); // Semi-transparent blue for the potential box
+      let boxHeight = defaultPitch + (this.pitch - defaultPitch) * 4;
+
         p.push();
         p.fill(Color);
         p.stroke(210);
-        p.translate(this.position.x + baseWidth / 2, this.position.y - defaultPitch - trackBallBase, this.position.z - baseWidth / 2);
+        p.translate(this.position.x + baseWidth / 2, this.position.y - boxHeight - trackBallBase, this.position.z - baseWidth / 2);
         p.cone(trackBallBase, trackBallBase * 2); // Default potential box size
         p.pop();
     }

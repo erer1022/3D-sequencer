@@ -12,7 +12,7 @@ let currentTrackIndex = -1;
 
 let numTracks = 1; // Initial number of tracks (default track)
 let numOriginTracks = 1;
-let trackDepth = 400;
+let trackDepth = 500;
 let keyboardLength = 0;
 let keyboardStartX = 200;
 let default_duration = 1;
@@ -248,7 +248,8 @@ let sketch3D = function(p) {
     for (let i = 0; i < tracks.length; i++) {
       let trackBall = trackBalls[i];
       let currentTrackInitialBox = tracks[i][0];
-      trackBall.y = currentTrackInitialBox.position.y - currentTrackInitialBox.pitch - trackBallBase;
+      let boxHeight = defaultPitch + (currentTrackInitialBox.pitch - defaultPitch) * 4;
+      trackBall.y = currentTrackInitialBox.position.y - boxHeight - trackBallBase;
     }
   }
 
@@ -352,6 +353,8 @@ let sketch3D = function(p) {
       let index = tracks[trackIndex].indexOf(anyBoxForPotentialTrackBall);  
       if (index !== -1) { // Ensure the box is found in the track
         let newTrackBall = new TrackBall(anyBoxForPotentialTrackBall.position);
+        let boxHeight = defaultPitch + (anyBoxForPotentialTrackBall.pitch - defaultPitch) * 4;
+        newTrackBall.y = anyBoxForPotentialTrackBall.position.y - boxHeight - trackBallBase;
         trackBalls.push(newTrackBall);
         // After adding a new trackball, reset all the box's isAddingNewTrackBall property
         tracks.forEach(track => {

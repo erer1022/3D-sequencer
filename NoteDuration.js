@@ -27,9 +27,9 @@ class NoteDuration {
         }
 
         if (this.y <= 0) {
-          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+          this.translateY = -this.y - this.h - sketch3DHeight / 2;
         } else {
-          this.translateY = this.y - this.h - sketch3DHeight / 3;
+          this.translateY = this.y - this.h - sketch3DHeight / 2;
         }
     
         p.fill(this.color);
@@ -40,9 +40,9 @@ class NoteDuration {
 
       displayInfo(p) {
         if (this.y <= 0) {
-          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+          this.translateY = -this.y - this.h - sketch3DHeight / 2;
         } else {
-          this.translateY = this.y - this.h - sketch3DHeight / 3;
+          this.translateY = this.y - this.h - sketch3DHeight / 2;
         }
 
 
@@ -81,9 +81,9 @@ class NoteDuration {
       isMouseOver(p) {
 
         if (this.y <= 0) {
-          this.translateY = -this.y - this.h - sketch3DHeight / 3;
+          this.translateY = -this.y - this.h - sketch3DHeight / 2;
         } else {
-          this.translateY = this.y - this.h - sketch3DHeight / 3;
+          this.translateY = this.y - this.h - sketch3DHeight / 2;
         }
 
         let dToObj = p.dist(cam1.eyeX, cam1.eyeY, cam1.eyeZ, this.x + this.w / 2, this.translateY, this.z);

@@ -12,6 +12,7 @@ let camZ = 0;
 let targetX;
 let targetY;
 let camSpeed = 0;
+let defaultPitch = 60;
 
 
 let CW;
