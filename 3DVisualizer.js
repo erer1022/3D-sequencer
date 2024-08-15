@@ -8,10 +8,11 @@ let baseWidth = 100;
 let boxDepth = 100;
 let camX = 0;
 let camY = 0;
+let camZ = 0;
 let targetX;
 let targetY;
 let camSpeed = 0;
-let globalBpm = 0;
+
 
 let CW;
 let useableMidiObject;
@@ -24,6 +25,7 @@ let bpmSpan;
 let isPlaying = false;
 let useableMidiObjectParsed = false;
 let builtInOptionsVisible = false;
+let useOrbitControl = false;
 
 let upButton;
 let downButton;
@@ -32,7 +34,10 @@ let rewindButton;
 let builtInButton;
 let currentTime;
 let currentTimeInSeconds;
+let myBar;
+let lastBarValue = 0;
 
+let bars = [];
 let trackNoteBoxes = [];
 let tracks = [];  // for midi data
 let builtInMidis = [];
@@ -77,12 +82,7 @@ let sketch3D = function(p) {
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-        p.orbitControl(3);
-        p.frameRate(frameRate);
-        if (globalBpm && globalBpm > 96) {
-            frameRate = globalBpm;
-        }
-        
+        p.frameRate(120);
         setCameraArguments(p);
 
         // Make sure the set procedure only conduct once, otherwise the computations is so heavy, it will influence the performance
@@ -93,19 +93,16 @@ let sketch3D = function(p) {
 
         if (useableMidiObject) {
             trackNoteBoxes.forEach(box => { 
-                //if (box.position.x < p.windowWidth) {
+                
                     activateNoteBoxes();
                     if (box.isActivate) {
                         targetX = box.position.x;
                     }
-                    box.display(p);
-                    if (globalBpm > 90) {
-                        camY = -2500;
-                    } else {
-                        camY = p.min(camY, box.position.y);
+                    if (box.position.x > camX - p.windowWidth && box.position.x < camX + p.windowWidth) {
+                      box.display(p);
                     }
                     
-                //}
+                    
             });
         } 
 
@@ -116,8 +113,20 @@ let sketch3D = function(p) {
 
             if (velocityX > 0) {
                 camX += velocityX;
-            } 
-            cam1.setPosition(camX, camY - 300, 1200);
+            }
+
+            if (!isPlaying) {
+              p.orbitControl(3);
+              camY = cam1.eyeY
+              camZ = cam1.eyeZ;
+            }
+
+            if (camY === 0) {
+              camY = -2500;
+              camZ = 1200;
+            }
+
+            cam1.setPosition(camX, camY, camZ);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
     }
 
@@ -128,6 +137,12 @@ let sketch3D = function(p) {
           let noteDuration = convertDurationToToneJS(trackNoteBoxes[i].duration);
           boxSynth.triggerAttackRelease(noteName, noteDuration);
         }
+      }
+    }
+
+    p.mouseDragged = function() {
+      if (!isPlaying) {
+        camX += (p.pmouseX - p.mouseX);
       }
     }
 
@@ -446,6 +461,8 @@ let sketch2D = function(p) {
         // Remove all parts and synths (this assumes you have a reference to them)
         Tone.Transport.bpm.value = midi.header.tempos[0].bpm + CW.tempoOffset; // Reset the tempo to the first tempo event in the new MIDI file
         Tone.Transport.position = '0:0:0'; // Reset the position
+        lastBarValue = 0;
+        bars = [];
       }
       
       function parseMidi(midi) {
@@ -477,7 +494,6 @@ let sketch2D = function(p) {
         for (let i = 0; i < midi.header.tempos.length; i++) {
           Tone.Transport.schedule(function(time) {
             Tone.Transport.bpm.value = midi.header.tempos[i].bpm + CW.tempoOffset;
-            globalBpm = midi.header.tempos[i].bpm + CW.tempoOffset;
           }, midi.header.tempos[i].ticks + "i");
         }
       
@@ -558,10 +574,10 @@ let sketch2D = function(p) {
     }
       
       function showPosition() {
-        var myPos = Tone.Transport.position;
-        var posArray = myPos.split(/\D+/);
-        var myBar = Number(posArray[0]) + 1;
-        var myBeat = Number(posArray[1]) + 1;
+        let myPos = Tone.Transport.position;
+        let posArray = myPos.split(/\D+/);
+        myBar = Number(posArray[0]) + 1;
+        let myBeat = Number(posArray[1]) + 1;
         positionSpan.html(myBar + ":" + myBeat);
       }
 
@@ -572,6 +588,8 @@ let sketch2D = function(p) {
         if (Tone.Transport.state === 'started') {
             Tone.Transport.start();
         }
+        lastBarValue = 0;
+        bars = [];
     }
 
     function changeTempo(dir) {
@@ -608,6 +626,31 @@ let sketch2D = function(p) {
         ticksSpan.html("Ticks: " + Tone.Transport.ticks);
         bpmSpan.html("BPM: " + Tone.Transport.bpm.value.toFixed());
       }, "8n");
+
+      if (myBar > lastBarValue) {
+        lastBarValue = myBar;
+        createRandomBar(p);
+      }
+      
+
+      // Update and draw all ellipses
+      for (let i = bars.length - 1; i >= 0; i--) {
+        let bar = bars[i];
+        bar.update();
+        bar.display(p);
+
+        // Remove the ellipse if it's faded out
+        if (bar.alpha <= 0) {
+            bars.splice(i, 1);
+        }
+      }
+    }
+
+    function createRandomBar(p) {
+      let x = p.random(0, p.windowWidth);
+      let y = p.random(0, sketch2DHeight);
+      let d = p.random(10, 50);
+      bars.push(new Bar(x, y, d, p));
     }
 }
 

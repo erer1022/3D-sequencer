@@ -84,7 +84,7 @@ class NoteBox {
       if (p.dist(cam1.eyeX + x._data[0] * dToObj / xMag, 
                  cam1.eyeY + x._data[1] * dToObj / xMag, 
                  cam1.eyeZ + x._data[2] * dToObj / xMag, 
-                 this.position.x + baseWidth * this.duration / 2, this.position.y - this.pitch / 2, this.position.z - baseWidth / 2) < baseWidth / 2) {
+                 this.position.x + baseWidth * this.duration / 2, this.position.y - this.pitch / 2, this.position.z - baseWidth / 2) < baseWidth / 4) {
         return true;
       } else {
         return false;
