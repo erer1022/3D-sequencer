@@ -51,7 +51,7 @@ button:hover {
   color: #b3cbf2;
 }
 
-button:active {
+.button:active {
   background: #b3cbf2;
 }
 

@@ -26,6 +26,7 @@ let bpmSpan;
 let isPlaying = false;
 let useableMidiObjectParsed = false;
 let builtInOptionsVisible = false;
+let helpVisible = false;
 let useOrbitControl = false;
 
 let upButton;
@@ -33,6 +34,7 @@ let downButton;
 let resetButton;
 let rewindButton;
 let builtInButton;
+let helpButton
 let currentTime;
 let currentTimeInSeconds;
 let myBar;
@@ -42,6 +44,7 @@ let bars = [];
 let trackNoteBoxes = [];
 let tracks = [];  // for midi data
 let builtInMidis = [];
+let helps = [];
 
 let boxSynth;
 // camera arguments
@@ -93,24 +96,18 @@ let sketch3D = function(p) {
         }
 
         if (useableMidiObject) {
+            activateNoteBoxes();
             trackNoteBoxes.forEach(box => { 
-                
-                    activateNoteBoxes();
-                    if (box.isActivate) {
-                        targetX = box.position.x;
-                    }
                     if (box.position.x > camX - p.windowWidth && box.position.x < camX + p.windowWidth) {
                       box.display(p);
                     }
-                    
-                    
             });
         } 
 
         updateCurrentTimeInTicks();
         // Automatically move the camera horizontally
             let distanceX = targetX - camX;
-            let velocityX = distanceX / (frameRate - 40);
+            let velocityX = distanceX / 60;
 
             if (velocityX > 0) {
                 camX += velocityX;
@@ -123,13 +120,25 @@ let sketch3D = function(p) {
             }
 
             if (camY === 0) {
-              camY = -2500;
-              camZ = 1200;
+              camY = -2000;
+              camZ = 1000;
             }
 
             cam1.setPosition(camX, camY, camZ);
             cam1.lookAt(camX, 0, 0); // Point the camera at the moving x position
     }
+
+    function activateNoteBoxes() {
+      trackNoteBoxes.forEach(box => {
+          if (currentTime && box.startTime <= currentTime && 
+              currentTime < box.endTime) {
+                  box.isActivate = true;
+                  targetX = box.position.x;
+              } else {
+                  box.isActivate = false;
+              }
+      });
+  }
 
     p.mousePressed = function() {
       for (let i = 0; i < trackNoteBoxes.length; i++) {
@@ -164,7 +173,7 @@ let sketch3D = function(p) {
         // iterate over each track
         for (let i = 0; i < useableMidiObject.tracks.length; i++) {
             let track = useableMidiObject.tracks[i];
-            let trackOffset = i * trackDepth;
+            let trackOffset = -300 + i * trackDepth;
             let notesByStartTime = {};
 
             // sort each track note by their start time
@@ -179,7 +188,6 @@ let sketch3D = function(p) {
               let sortedStartTimes = Object.keys(notesByStartTime).sort((a, b) => parseFloat(a) - parseFloat(b));
 
               for (let j = 0; j < sortedStartTimes.length; j++) {
-                //for (let j = 0; j < 20; j++) {
                 let startTime = sortedStartTimes[j];
                 let notes = notesByStartTime[startTime];
                 boxPosX = (startTime / useableMidiObject.header.ppq) * baseWidth;
@@ -189,31 +197,18 @@ let sketch3D = function(p) {
                 
           
                 notes.forEach(note => {
-                  let noteDuration = note.durationTicks / useableMidiObject.header.ppq / 4;
-                  let noteBox = new NoteBox(p.createVector(boxPosX, trackOffset, z), noteDuration, note.midi);
-                  // set noteBox's startTime and endTime
-                  noteBox.startTime = note.ticks;
-                  noteBox.endTime = note.ticks + note.durationTicks;
-                  trackNoteBoxes.push(noteBox);
-                  z += boxDepth;
+                  
+                    let noteDuration = note.durationTicks / useableMidiObject.header.ppq / 4;
+                    let noteBox = new NoteBox(p.createVector(boxPosX, trackOffset, z), noteDuration, note.midi);
+                    // set noteBox's startTime and endTime
+                    noteBox.startTime = note.ticks;
+                    noteBox.endTime = note.ticks + note.durationTicks;
+                    trackNoteBoxes.push(noteBox);
+                    z += boxDepth;
                   
                 });
               }
           }
-    }
-
-    
-    
-
-    function activateNoteBoxes() {
-        trackNoteBoxes.forEach(box => {
-            if (currentTime && box.startTime <= currentTime && 
-                currentTime < box.endTime) {
-                    box.isActivate = true;
-                } else {
-                    box.isActivate = false;
-                }
-        });
     }
 
     function setBoxSynth() {
@@ -349,9 +344,89 @@ let sketch2D = function(p) {
         builtInButton = p.createButton(`🎼 🎵 🎶`);
         builtInButton.mouseOver(() => {
             builtInButton.style('background', '#b3cbf2')
-        })
+        });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
         builtInButton.position(p.windowWidth - 100, 60);
+
+        helpButton = p.createButton(`?`);
+        helpButton.mouseOver(() => {
+          helpButton.style('background', '#b3cbf2')
+      });
+      helpButton.mousePressed(() => toggleHelpButton(p));
+      helpButton.position(20, 230);
+
+    }
+
+    function toggleHelpButton(p) {
+      if (helpVisible) {
+        helpButton.style('background', '#dcd8d8');
+        hideHelp();
+    } else {
+        helpButton.style('background', '#b3cbf2');
+        displayHelp(p);
+    }
+      helpVisible = !helpVisible;
+    }
+
+    function displayHelp(p) {
+      let help_upload = p.createSpan('Step 1: Upload a midi file to visualize it');
+      help_upload.style('background', 'rgba(251, 251, 251, 0.3)');
+      help_upload.style('width', '280px');
+      help_upload.style('color', '#9db2d4');
+      help_upload.position(200, 10);
+      helps.push(help_upload);
+
+      let help_builtIn = p.createSpan('Step 1: Choose a built-in file to visualize it');
+      help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
+      help_builtIn.style('width', '280px');
+      help_builtIn.style('color', '#9db2d4');
+      help_builtIn.position(1150, 10);
+      helps.push(help_builtIn);
+
+      let help_play = p.createSpan('Step 2: Click the PLAY button to start the music');
+      help_play.style('background', 'rgba(251, 251, 251, 0.3)');
+      help_play.style('width', '320px');
+      help_play.style('color', '#9db2d4');
+      help_play.position(80, 630);
+      helps.push(help_play);
+
+      let help_tempo = p.createSpan('Step 3: Adjust the TEMPO to experience variations');
+      help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
+      help_tempo.style('width', '350px');
+      help_tempo.style('color', '#9db2d4');
+      help_tempo.position(700, 630);
+      helps.push(help_tempo);
+
+      let help_attention = p.createSpan(`
+        Attention: <br><br>
+        When switching between built-in songs, <br> 
+        you may experience performance issues, <br>
+        such as the box not rewinding to the beginning. <br>
+        If this happens, try REFRESHING the page.<br><br>
+        Click the HELP button again to close all the messages`);
+      help_attention.style('background', 'rgba(251, 251, 251, 0.3)');
+      help_attention.style('width', '350px');
+      help_attention.style('color', '#9db2d4');
+      help_attention.position(p.windowWidth / 5, 200);
+      helps.push(help_attention);
+
+      let help_mouse = p.createSpan(`
+        Tips: <br><br>
+        The boxes are in a 3D environment. <br>
+        You can adjust the viewpoint by dragging the mouse <br>
+        or using the mouse wheel.`);
+        help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
+        help_mouse.style('width', '400px');
+        help_mouse.style('color', '#9db2d4');
+        help_mouse.position(p.windowWidth / 2, 200);
+      helps.push(help_mouse);
+
+
+    }
+
+    function hideHelp() {
+      helps.forEach(help => help.remove());
+      helps = [];
     }
 
     
@@ -374,22 +449,18 @@ let sketch2D = function(p) {
 
     function displayBuiltInOptions(p) {
         let midiFiles = [
-            "001",
-            "002",
-            "003",
-            "004-Mr-Lawrence-Merry-Christmas",
-            "005-Chopin-Nocturne-in-E-Flat-Opus-9-Nr-2",
-            "006-Debussy-Reverie",
-            "007-Canon-3",
+            "001-Cherni-139-1",
+            "002-Cherni-139-2",
+            "003-Bach-Prelude-C",
+            "004-Bach-14-Canons",
+            "005-Bethoven-For-elise",
+            "006-La-La-Land",
+            "007-Chopin-Nocturne-in-E-Flat-Opus-9-Nr-2",
             "008-Debussy-Clair-de-lune",
-            "009",
-            "010",
-            "011",
-            "012",
-            "013",
-            "014",
-            "015",
-            "016"
+            "009-Debussy-Reverie",
+            "010-Canon-3",
+            "011-Golden-Hour",
+            "012-Mr-Lawrence-Merry-Christmas"
         ];
         let positionY = 120;
 
@@ -585,7 +656,6 @@ let sketch2D = function(p) {
       function rewindMusic() {
         Tone.Transport.stop();
         Tone.Transport.position = '0:0:0';
-        camX = 0;
         if (Tone.Transport.state === 'started') {
             Tone.Transport.start();
         }

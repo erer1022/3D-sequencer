@@ -21,6 +21,8 @@ class NotePitchBox {
       p.stroke(200);
       
       let boxWidth = baseWidth * this.duration;
+      let noteName = this.midiNoteToNoteName(this.pitch);
+      
   
       // set color effects
       if (this.isMouseOver(p)) {
@@ -35,7 +37,11 @@ class NotePitchBox {
         this.color = p.color(203, 223, 247, 150);
         this.displayInfo(p);
       } else {
-        this.color = p.color(210, 225, 250);
+        if (noteName.includes('#')) {
+          this.color = p.color(0, 0, 0)
+        } else {
+          this.color = p.color(255, 255, 255)
+        }
       }
   
       p.fill(this.color);

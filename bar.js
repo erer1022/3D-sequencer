@@ -14,8 +14,8 @@ class Bar {
     }
 
     display(p) {
-        p.fill(p.random(210, 255), p.random(210, 255), 255, this.alpha)
-        p.stroke(p.random(210, 255), p.random(210, 255), 255, this.alpha)
+        p.fill(p.random(240, 255), p.random(240, 255), 255, this.alpha)
+        p.stroke(p.random(240, 255), p.random(240, 255), 255, this.alpha)
         
         p.ellipse(this.x, this.y, this.d);
     }

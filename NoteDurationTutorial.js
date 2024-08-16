@@ -105,7 +105,7 @@ let sketch3D = function(p) {
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-        p.orbitControl(3);
+       // p.orbitControl(3);
         
         setCameraArguments(p);
 
@@ -199,7 +199,9 @@ let sketch2D = function(p) {
         noteDuration.position(820, 400);
         noteDuration.size(450, 320);
 
-        let reminderSpan = p.createSpan('Click on the box to feel the note duration!');
+        let reminderSpan = p.createSpan(`
+            Click on the box to feel the note duration! <br>
+            `);
         reminderSpan.position(200, 50);
         reminderSpan.style('background', 'transparent');
 

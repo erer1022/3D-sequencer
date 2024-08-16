@@ -106,7 +106,7 @@ let sketch3D = function(p) {
     p.draw = function() {
         p.textFont(font);
         p.background(210);
-        p.orbitControl(3);
+        //p.orbitControl(3);
         
         setCameraArguments(p);
 
@@ -193,16 +193,19 @@ let sketch2D = function(p) {
         // -------------------------------------------- playing setting block --------------------------------------------
         let IllustrationSpan = p.createSpan(`
             The <b>PITCH</b> of a note determines how high or low it sounds. <br><br>
-            Musicians assign different letter names to these pitches: A, B, C, D, E, F, and G. <br>
+           
+
+            Musicians assign different letter names to these pitches: <br>
+            C (DO), D (RE), E (MI), F (FA), G (SO), A (LA), and B (TI). <br><br>
             These seven letters represent all the natural notes<br>
              (on a keyboard, these are the <b>WHITE KEYS</b>).<br><br>
 
             Each note name is followed by its octave number. <br>
-            Here, we are showing octave 4, the middle octave, and some notes are followed by a "#" symbol. <br>
+            Here, we are showing the 4th octave, the middle octave, and the first note of the 5th octive (C5). <br>
             A sharp sign ("#") indicates that the note is one half step higher than the natural note <br>
             (on a keyboard, these are the <b>BLACK KEYS</b>).<br><br>
-            This illustration shows one octave, which consists of 12 notes. <br>
-            In this project, we use the <b>HEIGHT</b> of the boxes to represent the pitch of each note.
+
+            
         `);
         IllustrationSpan.style('width', '900px');
         IllustrationSpan.style('height', '270px');
@@ -212,7 +215,11 @@ let sketch2D = function(p) {
         noteDuration.position(230, 170);
         noteDuration.size(900, 300);
 
-        let reminderSpan = p.createSpan('Click on the box to feel the note pitch!');
+        let reminderSpan = p.createSpan(`
+            Click on the box to feel the note pitch!<br>
+             In this project, we use the <b>HEIGHT</b> of the boxes to represent the pitch of each note.<br><br>
+            `
+            );
         reminderSpan.position(200, 20);
         reminderSpan.style('background', 'transparent');
         reminderSpan.style('font-size', '16px');
