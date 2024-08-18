@@ -28,6 +28,7 @@ let useableMidiObjectParsed = false;
 let builtInOptionsVisible = false;
 let helpVisible = false;
 let useOrbitControl = false;
+let audioContext = null;
 
 let upButton;
 let downButton;
@@ -109,7 +110,7 @@ let sketch3D = function(p) {
             let distanceX = targetX - camX;
             let velocityX = distanceX / 60;
 
-            if (velocityX > 0) {
+            if (velocityX) {
                 camX += velocityX;
             }
 
@@ -296,23 +297,40 @@ let sketch2D = function(p) {
         bpmSpan = p.createSpan('BPM: 0');
         bpmSpan.position(750, 60);
 
+        let help_mouse = p.createSpan(`
+          Tips: <br><br>
+          Adjust the viewpoint by dragging the mouse <br>
+          or using the mouse wheel!<br><br>
+          Try to click on the box!`);
+          help_mouse.style('width', '300px');
+          help_mouse.position(950, 60);
+
+          let Tips_refresh = p.createSpan(`
+            Tips: <br><br>
+            If you experience performance issue<br>
+            Try to refreshing the page!`);
+            Tips_refresh.style('width', '300px');
+            Tips_refresh.style('height', '90px');
+            Tips_refresh.position(850, 690);
+        
+
         // -------------------------------------------- tempo setting block
         let tempoSpan = p.createSpan(`TEMPO SETTING:`);
         tempoSpan.style('width', '270px');
         tempoSpan.style('height', '90px');
-        tempoSpan.position(700, 690);
+        tempoSpan.position(400, 690);
 
         upButton = p.createButton(`UP`);
         upButton.mousePressed(() => changeTempo(`UP`));
-        upButton.position(720, 730);
+        upButton.position(420, 730);
 
         downButton = p.createButton(`DOWN`);
         downButton.mousePressed(() => changeTempo(`DOWN`));
-        downButton.position(800, 730);
+        downButton.position(500, 730);
 
         resetButton = p.createButton(`RESET`);
         resetButton.mousePressed(() => changeTempo(`RESET`));
-        resetButton.position(900, 730);
+        resetButton.position(600, 730);
 
         // -------------------------------------------- playing setting block --------------------------------------------
         let playSpan = p.createSpan(`PLAY SETTING:`);
@@ -327,13 +345,27 @@ let sketch2D = function(p) {
 
         // Adding mousePressed event listener to the button
         playToggle.mousePressed(() => {
-            if (playToggle.elt.getAttribute('data-disabled') === 'true') {
-                isPlaying = false;
-            alert("Please upload a MIDI file or choose built-in files to play music");
-            } else {
-                isPlaying = !isPlaying;
-                handleButtonChange(isPlaying);
-            }
+            // if (playToggle.elt.getAttribute('data-disabled') === 'true') {
+            //     isPlaying = false;
+            // alert("Please upload a MIDI file or choose built-in files to play music");
+            // } else {
+            //     isPlaying = !isPlaying;
+            //     handleButtonChange(isPlaying);
+            // }
+            // Check if the AudioContext is already created
+          if (!audioContext) {
+              audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          } else if (audioContext.state === 'suspended') {
+              audioContext.resume();
+          }
+
+          if (playToggle.elt.getAttribute('data-disabled') === 'true') {
+              isPlaying = false;
+              alert("Please upload a MIDI file or choose built-in files to play music");
+          } else {
+              isPlaying = !isPlaying;
+              handleButtonChange(isPlaying);
+          }
         });
 
         resetButton = p.createButton(`REWIND`);
@@ -355,6 +387,48 @@ let sketch2D = function(p) {
       helpButton.mousePressed(() => toggleHelpButton(p));
       helpButton.position(20, 230);
 
+    }
+
+    // Function to handle the simulated "change" event
+    // function handleButtonChange(state) {
+    //   if (state) {
+    //       Tone.Transport.start();
+    //       playToggle.html('❚❚'); // Change button label to 'Pause'
+    //       playToggle.style('background', '#b3cbf2');
+    //   } else {
+    //       Tone.Transport.pause();
+    //       playToggle.html('▶︎'); // Change button label to 'Play'
+    //       playToggle.style('background', '#dcd8d8');
+    //   }
+    // }
+    function handleButtonChange(state) {
+      if (!audioContext) {
+          // This is a fallback; ideally, this shouldn't be necessary if initialized properly elsewhere
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+  
+      if (audioContext.state === 'suspended') {
+          // Resume AudioContext if suspended
+          audioContext.resume().then(() => {
+              togglePlayback(state);
+          }).catch(error => {
+              console.error("Error resuming the AudioContext:", error);
+          });
+      } else {
+          togglePlayback(state);
+      }
+    }
+
+    function togglePlayback(state) {
+      if (state) {
+          Tone.Transport.start();
+          playToggle.html('❚❚'); // Change button label to 'Pause'
+          playToggle.style('background', '#b3cbf2');
+      } else {
+          Tone.Transport.pause();
+          playToggle.html('▶︎'); // Change button label to 'Play'
+          playToggle.style('background', '#dcd8d8');
+      }
     }
 
     function toggleHelpButton(p) {
@@ -409,27 +483,12 @@ let sketch2D = function(p) {
       help_attention.style('color', '#9db2d4');
       help_attention.position(200, 200);
       helps.push(help_attention);
-
-      let help_mouse = p.createSpan(`
-        Tips: <br><br>
-        The boxes are in a 3D environment. <br>
-        You can adjust the viewpoint by dragging the mouse <br>
-        or using the mouse wheel.`);
-        help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
-        help_mouse.style('width', '400px');
-        help_mouse.style('color', '#9db2d4');
-        help_mouse.position(p.windowWidth / 2, 230);
-      helps.push(help_mouse);
-
-
     }
 
     function hideHelp() {
       helps.forEach(help => help.remove());
       helps = [];
     }
-
-    
 
     function toggleBuiltInOptions(p) {
         if (builtInOptionsVisible) {
@@ -631,19 +690,6 @@ let sketch2D = function(p) {
         // Optionally, you can add an event listener using p5.js if needed
         // playToggle.mousePressed(togglePlay);
       }
-
-      // Function to handle the simulated "change" event
-    function handleButtonChange(state) {
-        if (state) {
-            Tone.Transport.start();
-            playToggle.html('❚❚'); // Change button label to 'Pause'
-            playToggle.style('background', '#b3cbf2');
-        } else {
-            Tone.Transport.pause();
-            playToggle.html('▶︎'); // Change button label to 'Play'
-            playToggle.style('background', '#dcd8d8');
-        }
-    }
       
       function showPosition() {
         let myPos = Tone.Transport.position;
@@ -659,6 +705,7 @@ let sketch2D = function(p) {
         if (Tone.Transport.state === 'started') {
             Tone.Transport.start();
         }
+        targetX = 0;
         lastBarValue = 0;
         bars = [];
     }
