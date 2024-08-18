@@ -369,28 +369,28 @@ let sketch2D = function(p) {
     }
 
     function displayHelp(p) {
-      let help_upload = p.createSpan('Step 1: Upload a midi file to visualize it');
+      let help_upload = p.createSpan('STEP 1: Upload a midi file to visualize it');
       help_upload.style('background', 'rgba(251, 251, 251, 0.3)');
       help_upload.style('width', '280px');
       help_upload.style('color', '#9db2d4');
       help_upload.position(200, 10);
       helps.push(help_upload);
 
-      let help_builtIn = p.createSpan('Step 1: Choose a built-in file to visualize it');
+      let help_builtIn = p.createSpan('STEP 1: Choose a built-in file to visualize it');
       help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
       help_builtIn.style('width', '280px');
       help_builtIn.style('color', '#9db2d4');
       help_builtIn.position(1150, 10);
       helps.push(help_builtIn);
 
-      let help_play = p.createSpan('Step 2: Click the PLAY button to start the music');
+      let help_play = p.createSpan('STEP 2: Click the PLAY button to start the music');
       help_play.style('background', 'rgba(251, 251, 251, 0.3)');
       help_play.style('width', '320px');
       help_play.style('color', '#9db2d4');
       help_play.position(80, 630);
       helps.push(help_play);
 
-      let help_tempo = p.createSpan('Step 3: Adjust the TEMPO to experience variations');
+      let help_tempo = p.createSpan('STEP 3: Adjust the TEMPO to experience variations');
       help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
       help_tempo.style('width', '350px');
       help_tempo.style('color', '#9db2d4');
@@ -407,7 +407,7 @@ let sketch2D = function(p) {
       help_attention.style('background', 'rgba(251, 251, 251, 0.3)');
       help_attention.style('width', '350px');
       help_attention.style('color', '#9db2d4');
-      help_attention.position(p.windowWidth / 5, 200);
+      help_attention.position(200, 200);
       helps.push(help_attention);
 
       let help_mouse = p.createSpan(`
@@ -418,7 +418,7 @@ let sketch2D = function(p) {
         help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
         help_mouse.style('width', '400px');
         help_mouse.style('color', '#9db2d4');
-        help_mouse.position(p.windowWidth / 2, 200);
+        help_mouse.position(p.windowWidth / 2, 230);
       helps.push(help_mouse);
 
 
@@ -477,7 +477,7 @@ let sketch2D = function(p) {
     }
 
     function loadBuiltInMidi(p, file) {
-        let fileUrl = `/builtInMidi/${file}.json`; // Construct the file URL based on the file name
+        let fileUrl = `./builtInMidi/${file}.json`; // Construct the file URL based on the file name
         
         p.loadJSON(fileUrl, (json) => {
             handleMidiJSON(json); // Use the existing function to handle the parsed MIDI JSON object
