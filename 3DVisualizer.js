@@ -35,7 +35,10 @@ let downButton;
 let resetButton;
 let rewindButton;
 let builtInButton;
-let helpButton
+let helpButton;
+let visualizerButton;
+let sequencerButton;
+let tutorialButton
 let currentTime;
 let currentTimeInSeconds;
 let myBar;
@@ -261,16 +264,26 @@ let sketch2D = function(p) {
     p.setup = function() {
       p.createCanvas(p.windowWidth, sketch2DHeight).parent('2d-container');
 
-      let visualizerButton = p.select('#Visualizer');
+      visualizerButton = p.select('#Visualizer');
       visualizerButton.position(20, 50);
       visualizerButton.style('background', '#b3cbf2');
       visualizerButton.style('color', '#000307');
   
-      let sequencerButton = p.select('#Sequencer');
+      sequencerButton = p.select('#Sequencer');
       sequencerButton.position(20, 110);
   
-      let tutorialButton = p.select('#Tutorial');
+      tutorialButton = p.select('#Tutorial');
       tutorialButton.position(20, 170);
+
+      helpButton = p.select('#Help');
+        helpButton.mouseOver(() => {
+          helpButton.style('background', '#b3cbf2')
+        });
+      helpButton.mousePressed(() => toggleHelpButton(p));
+      helpButton.position(20, 230);
+
+      // Setup tooltips
+      setupTooltips();
 
       CW = CW || {};
       CW.tempoOffset = 0;
@@ -345,14 +358,6 @@ let sketch2D = function(p) {
 
         // Adding mousePressed event listener to the button
         playToggle.mousePressed(() => {
-            // if (playToggle.elt.getAttribute('data-disabled') === 'true') {
-            //     isPlaying = false;
-            // alert("Please upload a MIDI file or choose built-in files to play music");
-            // } else {
-            //     isPlaying = !isPlaying;
-            //     handleButtonChange(isPlaying);
-            // }
-            // Check if the AudioContext is already created
           if (!audioContext) {
               audioContext = new (window.AudioContext || window.webkitAudioContext)();
           } else if (audioContext.state === 'suspended') {
@@ -379,28 +384,42 @@ let sketch2D = function(p) {
         });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
         builtInButton.position(p.windowWidth - 100, 60);
-
-        helpButton = p.createButton(`?`);
-        helpButton.mouseOver(() => {
-          helpButton.style('background', '#b3cbf2')
-      });
-      helpButton.mousePressed(() => toggleHelpButton(p));
-      helpButton.position(20, 230);
-
     }
 
-    // Function to handle the simulated "change" event
-    // function handleButtonChange(state) {
-    //   if (state) {
-    //       Tone.Transport.start();
-    //       playToggle.html('❚❚'); // Change button label to 'Pause'
-    //       playToggle.style('background', '#b3cbf2');
-    //   } else {
-    //       Tone.Transport.pause();
-    //       playToggle.html('▶︎'); // Change button label to 'Play'
-    //       playToggle.style('background', '#dcd8d8');
-    //   }
-    // }
+    function setupTooltips() {
+      const buttons = [visualizerButton, sequencerButton, tutorialButton, helpButton];
+      const tooltip = p.createDiv('').addClass('tooltip');
+      tooltip.hide();
+  
+      // Tooltip messages for each button
+      const tooltips = {
+          Visualizer: "Visualizer: <br>Visualize midi file by note boxes! <br>And interact with the boxes!",
+          Sequencer: "Sequencer:  <br>Compose the music<br> by building note boxes!",
+          Tutorial: "Tutorial: <br>Click to start the tutorial.",
+          Help: "Help: <br> Click to see more guidance <br> Click again to close the messages"
+      };
+  
+      buttons.forEach(button => {
+          button.mouseOver(() => {
+              const buttonId = button.elt.id;
+              tooltip.html(tooltips[buttonId]);
+              tooltip.style('visibility', 'visible');
+              tooltip.style('opacity', '1');
+              
+              // Position the tooltip above the button
+              const rect = button.elt.getBoundingClientRect();
+              tooltip.position(rect.left + (rect.width) * 1.25 - (tooltip.elt.offsetWidth / 2), rect.top - tooltip.elt.offsetHeight);
+              tooltip.show();
+          });
+  
+          button.mouseOut(() => {
+              tooltip.style('visibility', 'hidden');
+              tooltip.style('opacity', '0');
+              tooltip.hide();
+          });
+      });
+    }
+
     function handleButtonChange(state) {
       if (!audioContext) {
           // This is a fallback; ideally, this shouldn't be necessary if initialized properly elsewhere
@@ -470,19 +489,6 @@ let sketch2D = function(p) {
       help_tempo.style('color', '#9db2d4');
       help_tempo.position(700, 630);
       helps.push(help_tempo);
-
-      let help_attention = p.createSpan(`
-        Attention: <br><br>
-        When switching between built-in songs, <br> 
-        you may experience performance issues, <br>
-        such as the box not rewinding to the beginning. <br>
-        If this happens, try REFRESHING the page.<br><br>
-        Click the HELP button again to close all the messages`);
-      help_attention.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_attention.style('width', '350px');
-      help_attention.style('color', '#9db2d4');
-      help_attention.position(200, 200);
-      helps.push(help_attention);
     }
 
     function hideHelp() {

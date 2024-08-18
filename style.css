@@ -175,4 +175,19 @@ input[type="file"]::file-selector-button:hover {
   box-shadow: #121212 0 0 0 3px, transparent 0 0 0 0;
 } */
 
+.tooltip {
+  position: absolute;
+  background-color: rgba(51, 51, 51, 0.5);
+  color: white;
+  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  font-size: 14px;
+  text-align: left;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
 
