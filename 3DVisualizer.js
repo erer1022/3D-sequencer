@@ -26,7 +26,7 @@ let bpmSpan;
 let isPlaying = false;
 let useableMidiObjectParsed = false;
 let builtInOptionsVisible = false;
-let helpVisible = false;
+let helpVisible = true;
 let useOrbitControl = false;
 let audioContext = null;
 
@@ -269,9 +269,8 @@ let sketch2D = function(p) {
       tutorialButton.position(20, 170);
 
       helpButton = p.select('#Help');
-        helpButton.mouseOver(() => {
-          helpButton.style('background', '#b3cbf2')
-        });
+      helpButton.style('background', '#b3cbf2');
+      displayHelp(p);
       helpButton.mousePressed(() => toggleHelpButton(p));
       helpButton.position(20, 230);
 
@@ -305,6 +304,7 @@ let sketch2D = function(p) {
 
         let help_mouse = p.createSpan(`
           Tips: <br><br>
+          When the music is NOT playing: <br>
           Adjust the viewpoint by dragging the mouse <br>
           or using the mouse wheel!<br><br>
           Try to click on the box!`);
@@ -485,7 +485,7 @@ let sketch2D = function(p) {
       help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
       help_tempo.style('width', '350px');
       help_tempo.style('color', '#9db2d4');
-      help_tempo.position(700, 630);
+      help_tempo.position(850, 630);
       helps.push(help_tempo);
     }
 

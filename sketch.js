@@ -55,7 +55,7 @@ let helps = [];
 
 let isMouseOverKeyboard = false;
 let showPotentialBox = false;
-let helpVisible = false;
+let helpVisible = true;
 let isReverseOrder = false;
 
 // camera arguments
@@ -181,14 +181,13 @@ let sketch3D = function(p) {
     tutorialButton.position(20, 170);
 
     helpButton = p.select('#Help');
-        helpButton.mouseOver(() => {
-          helpButton.style('background', '#b3cbf2')
-        });
-      helpButton.mousePressed(() => toggleHelpButton(p));
-      helpButton.position(20, 230);
+    helpButton.style('background', '#b3cbf2');
+    displayHelp(p);
+    helpButton.mousePressed(() => toggleHelpButton(p));
+    helpButton.position(20, 230);
 
-      // Setup tooltips
-      setupTooltips();
+    // Setup tooltips
+    setupTooltips();
     
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
@@ -264,11 +263,14 @@ let sketch3D = function(p) {
   function displayHelp(p) {
     let help_overall = p.createSpan(`
       <strong>Tips:</strong><br><br>
-          First, choose the <strong>box</strong>.<br>
+          First, click on the box to choose it.<br>
+          (it will become transparent pink) <br><br>
           Adjust its <strong>pitch</strong> by selecting the corresponding key.<br>
           Adjust its <strong>duration</strong> by selecting the transparent boxes above it.<br>
           Or, generate a new box around it.<br><br>
-          Finally, click on the <strong>play button</strong> to hear your track!<br>
+          Finally, click on the <strong>play button</strong> to hear your track!<br><br>
+
+          Click on the "?" button again to close the messages.
     `);
     help_overall.style('width', '420px');
     help_overall.position(20, 300);
@@ -1078,23 +1080,7 @@ function isOccupied(potentialBoxPosition) {
     }
   }
   return false;
-  
-  // for (let i = 0; i < tracks.length; i++) {
-  //   let boxPos = defaultTrack[i].position.x;
-  //   let boxWidth = defaultTrack[i].duration * baseWidth;
-  //   if (position >= boxPos && position < boxPos + boxWidth) {
-  //     return true;
-  //   }
-  // }
-  // return false;
 }
-
-// Function to handle mouse wheel for zooming
-// function mouseWheel(event) {
-//   // Zoom in and out
-//   zoomLevel += event.delta * -0.001; // Adjust the zoom level based on the scroll amount
-//   zoomLevel = constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
-// }
 
 // Function to convert note duration to Tone.js notation
 function convertDurationToToneJS(duration) {
