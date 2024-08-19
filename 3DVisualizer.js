@@ -38,7 +38,7 @@ let builtInButton;
 let helpButton;
 let visualizerButton;
 let sequencerButton;
-let tutorialButton
+let tutorialButton;
 let currentTime;
 let currentTimeInSeconds;
 let myBar;
@@ -80,13 +80,6 @@ let sketch3D = function(p) {
       setBoxSynth();
     }
 
-    // function onWheel(event) {
-    //     // Zoom in and out
-    //     zoomLevel += event.deltaY * -0.001; // Adjust the zoom level based on the scroll amount
-    //     zoomLevel = p.constrain(zoomLevel, 0.5, 2); // Constrain the zoom level to prevent it from getting too close or too far
-    //     console.log('Zoom Level:', zoomLevel); // Optional: For debugging purposes
-    // }
-
     p.draw = function() {
         p.textFont(font);
         p.background(210);
@@ -118,7 +111,7 @@ let sketch3D = function(p) {
             }
 
             if (!isPlaying) {
-              p.orbitControl(3);
+              p.orbitControl(1);
               camY = cam1.eyeY
               camZ = cam1.eyeZ;
             }
@@ -334,14 +327,17 @@ let sketch2D = function(p) {
         tempoSpan.position(400, 690);
 
         upButton = p.createButton(`UP`);
+        upButton.attribute('disabled', '');
         upButton.mousePressed(() => changeTempo(`UP`));
         upButton.position(420, 730);
 
         downButton = p.createButton(`DOWN`);
+        downButton.attribute('disabled', '');
         downButton.mousePressed(() => changeTempo(`DOWN`));
         downButton.position(500, 730);
 
         resetButton = p.createButton(`RESET`);
+        resetButton.attribute('disabled', '');
         resetButton.mousePressed(() => changeTempo(`RESET`));
         resetButton.position(600, 730);
 
@@ -354,7 +350,7 @@ let sketch2D = function(p) {
 
         playToggle = p.createButton('▶︎');
         playToggle.position(200, 730);
-        playToggle.attribute('data-disabled', 'true');
+        playToggle.attribute('disabled', 'true');
 
         // Adding mousePressed event listener to the button
         playToggle.mousePressed(() => {
@@ -364,7 +360,8 @@ let sketch2D = function(p) {
               audioContext.resume();
           }
 
-          if (playToggle.elt.getAttribute('data-disabled') === 'true') {
+          // Check if the button is disabled
+          if (playToggle.elt.hasAttribute('disabled')) {
               isPlaying = false;
               alert("Please upload a MIDI file or choose built-in files to play music");
           } else {
@@ -373,9 +370,10 @@ let sketch2D = function(p) {
           }
         });
 
-        resetButton = p.createButton(`REWIND`);
-        resetButton.mousePressed(rewindMusic);
-        resetButton.position(100, 730);
+        rewindButton = p.createButton(`REWIND`);
+        rewindButton.attribute('disabled', '');
+        rewindButton.mousePressed(rewindMusic);
+        rewindButton.position(100, 730);
 
         // -------------------------------------------- Built-ins Setting -------------------------------------------- 
         builtInButton = p.createButton(`🎼 🎵 🎶`);
@@ -690,11 +688,11 @@ let sketch2D = function(p) {
 
       function setupPlayer() {
         // Enable the playToggle button
-        // Enable the playToggle button by setting the custom attribute to false
-        playToggle.attribute('data-disabled', 'false');
-      
-        // Optionally, you can add an event listener using p5.js if needed
-        // playToggle.mousePressed(togglePlay);
+        playToggle.removeAttribute('disabled');
+        upButton.removeAttribute('disabled');
+        downButton.removeAttribute('disabled');
+        resetButton.removeAttribute('disabled');
+        rewindButton.removeAttribute('disabled');
       }
       
       function showPosition() {

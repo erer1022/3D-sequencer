@@ -12,6 +12,7 @@ let currentTrackIndex = -1;
 
 let numTracks = 1; // Initial number of tracks (default track)
 let numOriginTracks = 1;
+let maxOriginTracks = 5;
 let trackDepth = 500;
 let keyboardLength = 0;
 let keyboardStartX = 200;
@@ -31,6 +32,14 @@ let PPQ = 48; // Pulses Per Quarter note (1 second per quarter note)
 let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
 
 let potentialBoxPosition = null;
+let helpButton;
+let visualizerButton;
+let sequencerButton;
+let tutorialButton;
+let allTracksButton;
+let originTrackButton;
+let newTrackBallButton;
+let deleteBoxButton;
 
 let defaultTrack = [];
 let potentialBoxes = []; // Array to store potential boxes
@@ -40,9 +49,14 @@ let noteDurations = [];
 let note_duration = [1, 1/2, 1/4, 1/8, 1/16];
 let tracks = []; // Array to store multiple noteBoxes arrays
 let currentTrack = 0; // Index to keep track of the current track
+let trackButtons = [];
+let buttonY = 10;
+let helps = [];
 
 let isMouseOverKeyboard = false;
 let showPotentialBox = false;
+let helpVisible = false;
+let isReverseOrder = false;
 
 // camera arguments
 let cam1;
@@ -83,32 +97,98 @@ let sketch3D = function(p) {
     //noteBoxSynth = new Tone.PolySynth().toMaster();
 
     // -------------------------------------------- Create button --------------------------------------------
-    let playButton = p.createButton('▶︎');
-    playButton.mousePressed(() => playNote(p));
-    playButton.position(300, 720);
+    let playSpan = p.createSpan(`All tracks:`);
+        playSpan.style('width', '80px');
+        playSpan.style('height', '80px');
+        playSpan.position(100, 690);
 
-    let deleteButton = p.createButton('- Delete note box');
-    deleteButton.mousePressed(deleteLatestBox);
-    deleteButton.position(1280, 250);
+     allTracksButton = p.createButton('▶︎');
+     allTracksButton.id('AllTracks');
+     allTracksButton.mousePressed(() => playNote(p));
+     allTracksButton.position(130, 735);
 
-    let newTrackBallButton = p.createButton('+ add a new trackBall');
-    newTrackBallButton.mousePressed(() => createNewTrackBall(p));
-    newTrackBallButton.position(1280, 350);
+    let track1 = p.createSpan(`Track 1:`);
+        track1.style('width', '80px');
+        track1.style('height', '80px');
+        track1.position(250, 690);
+
+     originTrackButton = p.createButton('▶︎');
+        //track1Button.mousePressed(() => playNote(p));
+        originTrackButton.position(280, 735);
+        originTrackButton.id('OriginTrack');
+        originTrackButton.mousePressed(() => playTrack(tracks[0]));
+
+    let newTrackSpan = p.createSpan(`New tracks:`);
+        newTrackSpan.style('width', '300px');
+        newTrackSpan.style('height', '80px');
+        newTrackSpan.position(530, 690);
+
+    deleteBoxButton = p.createButton('- Delete note box');
+    deleteBoxButton.mousePressed(deleteLatestBox);
+    deleteBoxButton.position(1300, 50);
+    deleteBoxButton.id('DeleteBox');
 
     let newTrackButton = p.createButton(`+ new track`);
-    newTrackButton.mousePressed(() => createNewTrack(p));
-    newTrackButton.position(1280, 150);
+    newTrackButton.mousePressed(() => {
+      if (numOriginTracks < maxOriginTracks) {
+          createNewTrack(p);
+      } else {
+        //alert("You can only add 4 new tracks");
+        newTrackButton.attribute('disabled', '');
+        newTrackButton.html('limit reached');
+      }
+    });
+    newTrackButton.position(400, 690);
 
-    let visualizerButton = p.select('#Visualizer');
+    let newTrackBallSpan = p.createSpan(`New trackBalls on the same track:`);
+        newTrackBallSpan.style('width', '300px');
+        newTrackBallSpan.style('height', '80px');
+        newTrackBallSpan.position(1100, 690);
+
+    newTrackBallButton = p.createButton('+ add a new trackBall');
+    newTrackBallButton.mousePressed(() => {
+      if (numTracks - numOriginTracks < maxOriginTracks - 1) {
+          createNewTrackBall(p);
+      } else {
+        //alert("You can only add 4 new tracks");
+        newTrackBallButton.attribute('disabled', '');
+        newTrackBallButton.html('limit reached');
+      }
+    });
+    newTrackBallButton.id('NewTrackBall')
+    newTrackBallButton.position(900, 745);
+
+    trackOrderToggle = p.createButton('same order');
+    trackOrderToggle.mousePressed(() => {
+      toggleTrackOrder();
+    });
+    trackOrderToggle.position(900, 690);
+    trackOrderToggle.style('background', '#b3cbf2');
+    trackOrderToggle.style('color', '#000307');
+    trackOrderToggle.id('TrackOrder');
+
+    // ------------------------------------------------------------------------------------------------
+
+    visualizerButton = p.select('#Visualizer');
     visualizerButton.position(20, 50);
 
-    let sequencerButton = p.select('#Sequencer');
+    sequencerButton = p.select('#Sequencer');
     sequencerButton.position(20, 110);
     sequencerButton.style('background', '#b3cbf2');
     sequencerButton.style('color', '#000307');
 
-    let tutorialButton = p.select('#Tutorial');
+    tutorialButton = p.select('#Tutorial');
     tutorialButton.position(20, 170);
+
+    helpButton = p.select('#Help');
+        helpButton.mouseOver(() => {
+          helpButton.style('background', '#b3cbf2')
+        });
+      helpButton.mousePressed(() => toggleHelpButton(p));
+      helpButton.position(20, 230);
+
+      // Setup tooltips
+      setupTooltips();
     
     // -------------------------------------------- set the initial box --------------------------------------------
     initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
@@ -116,6 +196,108 @@ let sketch3D = function(p) {
     defaultTrack.isCloneTrack = false;
     defaultTrack.isReverseOrder = false;
     tracks.push(defaultTrack);
+  }
+
+  function setupTooltips() {
+    const buttons = [visualizerButton, sequencerButton, tutorialButton, helpButton, allTracksButton, originTrackButton, newTrackBallButton, trackOrderToggle, deleteBoxButton];
+    const tooltip = p.createDiv('').addClass('tooltip');
+    tooltip.hide();
+
+    // Tooltip messages for each button
+    const tooltips = {
+        Visualizer: "Visualizer: <br>Visualize midi file by note boxes! <br>And interact with the boxes!",
+        Sequencer: "Sequencer:  <br>Compose the music<br> by building note boxes!",
+        Tutorial: "Tutorial: <br>Click to start the tutorial.",
+        Help: "Help: <br> Click to see more guidance <br> Click again to close the messages",
+        AllTracks: "This button will <br>synthesize all the tracks",
+        OriginTrack: "This button will <br>play the origin track",
+        NewTrackBall: "This button is for adding <br>new trackBall on the same track",
+        TrackOrder: "Toggle the trackBall's order<br> same order / reverse order",
+        DeleteBox: "Choose the last added box<br>click on the button to delete it"
+    };
+
+    buttons.forEach(button => {
+        button.mouseOver(() => {
+            const buttonId = button.elt.id;
+            tooltip.html(tooltips[buttonId]);
+            tooltip.style('visibility', 'visible');
+            tooltip.style('opacity', '1');
+            
+            // Position the tooltip above the button
+            const rect = button.elt.getBoundingClientRect();
+            tooltip.position(rect.left + (rect.width) * 1.25 - (tooltip.elt.offsetWidth / 2), rect.top - tooltip.elt.offsetHeight);
+            tooltip.show();
+        });
+
+        button.mouseOut(() => {
+            tooltip.style('visibility', 'hidden');
+            tooltip.style('opacity', '0');
+            tooltip.hide();
+        });
+    });
+  }
+
+  function toggleHelpButton(p) {
+    if (helpVisible) {
+      helpButton.style('background', '#dcd8d8');
+      hideHelp();
+  } else {
+      helpButton.style('background', '#b3cbf2');
+      displayHelp(p);
+  }
+    helpVisible = !helpVisible;
+  }
+
+  function toggleTrackOrder() {
+    if (!isReverseOrder) {
+      trackOrderToggle.html('reverse order');
+      trackOrderToggle.style('background', '#000307');
+      trackOrderToggle.style('color', '#b3cbf2');
+    } else {
+      trackOrderToggle.html('same order');
+      trackOrderToggle.style('background', '#b3cbf2');
+      trackOrderToggle.style('color', '#000307');
+    }
+    isReverseOrder = !isReverseOrder;
+  }
+
+  function displayHelp(p) {
+    let help_overall = p.createSpan(`
+      <strong>Tips:</strong><br><br>
+          First, choose the <strong>box</strong>.<br>
+          Adjust its <strong>pitch</strong> by selecting the corresponding key.<br>
+          Adjust its <strong>duration</strong> by selecting the transparent boxes above it.<br>
+          Or, generate a new box around it.<br><br>
+          Finally, click on the <strong>play button</strong> to hear your track!<br>
+    `);
+    help_overall.style('width', '420px');
+    help_overall.position(20, 300);
+
+      helps.push(help_overall);
+
+      let help_addNewTrackBall = p.createSpan(`
+        <strong>How to Add a New TrackBall:</strong><br>
+        <ol>
+            <li>First, choose the <strong>order</strong>:</li>
+            <ul>
+                <li><strong>Same Order</strong>: The new trackball will follow <br>the same order as the original trackball.</li>
+                <li><strong>Reverse Order</strong>: The new trackball will follow <br>the reverse order of the original trackball.</li>
+            </ul>
+            <br>
+            <li>Click on the <strong>"Add a New TrackBall"</strong> button.</li>
+            <li>Hover your mouse over the boxes. <br>You will see the potential trackball positions on the boxes.</li>
+            <li>Click on the box where you want to add the trackball.</li>
+        </ol>
+    `);
+      help_addNewTrackBall.style('width', '420px');
+      help_addNewTrackBall.position(950, 300);
+  
+        helps.push(help_addNewTrackBall);
+  }
+
+  function hideHelp() {
+    helps.forEach(help => help.remove());
+    helps = [];
   }
 
   
@@ -147,6 +329,11 @@ let sketch3D = function(p) {
     // Increment the number of tracks
     numTracks++;
     numOriginTracks++;
+
+    // Create a play button for the new track
+    let playButton = p.createButton(`▶︎`);
+    playButton.position(500 + (numOriginTracks - 1) * 70, 735); // Adjust the position dynamically
+    playButton.mousePressed(() => playTrack(newTrack)); // Pass the correct track index
   }
 
   p.draw = function() {
@@ -260,24 +447,6 @@ let sketch3D = function(p) {
     } 
     return noteDurations;
   }
-
-  // function getMoveDirection(currentBox, nextBox) {
-  //   let moveDirection;
-    
-  //   if (nextBox.position.x == currentBox.position.x && nextBox.position.z < currentBox.position.z) {
-  //     moveDirection = BoxSide.BACK;
-  //   } else if (nextBox.position.x > currentBox.position.x) {
-  //     moveDirection = BoxSide.RIGHT;
-  //   } else if (nextBox.position.x < currentBox.position.x) {
-  //     moveDirection = BoxSide.LEFT;
-  //   } else if (nextBox.position.x == currentBox.position.x && nextBox.position.z > currentBox.position.z) {
-  //     moveDirection = BoxSide.FRONT;
-  //   } else {
-  //     // Set default
-  //     moveDirection = BoxSide.RIGHT;
-  //   }
-  //   return moveDirection;
-  // }
   
   // Function to handle mouse clicks
   p.mousePressed = function() {
@@ -404,7 +573,7 @@ let sketch3D = function(p) {
                 if (!cloneTrack.isReverseOrder) {
                   cloneTrack.push(latestBox.clone(p));
                 }
-              })
+              });
             }
         }
     }
@@ -416,7 +585,7 @@ function setNewCloneTrack(index, trackIndex, p) {
   let newCloneTrack = [];
   let oldTrack = tracks[trackIndex];
 
-  if (trackOrderToggle.isReverse) {
+  if (isReverseOrder) {
       // Clone the boxes from the specified track in reverse order
       for (let i = index; i >= 0; i--) {
           newCloneTrack.push(oldTrack[i].clone(p));
@@ -444,6 +613,11 @@ function setNewCloneTrack(index, trackIndex, p) {
   // Add the new clone track to the tracks array
   tracks.push(newCloneTrack);
   numTracks++;
+
+  // Create a play button for the new track
+  let playButton = p.createButton(`▶︎`);
+  playButton.position(1060 + (numTracks - numOriginTracks) * 70, 735); // Adjust the position dynamically
+  playButton.mousePressed(() => playTrack(newCloneTrack)); // Pass the correct track index
 }
 
 
@@ -501,9 +675,48 @@ function setNewCloneTrack(index, trackIndex, p) {
           }]).start(); // Start the part to begin scheduling events
       });
     }
-
     // Start the Tone.Transport to begin playback
     Tone.Transport.start();
+}
+
+function playTrack(track) {
+  // Reset the default trackBall
+  resetTrackBallPositions();
+  // Set the pulses per quarter note (PPQ)
+  Tone.Transport.PPQ = PPQ;
+  // Function to set note values if needed
+  setNoteValues();
+
+  let synth;
+
+  //synths[i] = new Tone.PolySynth().toMaster();
+  synth = new Tone.Synth();
+  synth.oscillator.type = "sine";
+  synth.toDestination();
+  // Iterate through each noteBox to schedule notes
+    track.forEach(box => {
+      const note_pitch = midiNoteToNoteName(box.pitch);
+      const note_duration = convertDurationToToneJS(box.duration);
+
+      // Create a Tone.Part for each noteBox
+      var part = new Tone.Part(function(time, value) {
+          // Schedule the synth to play the note with the specified parameters
+          synth.triggerAttackRelease(value.name, value.duration, time);
+
+          activateVisualEffect(box);
+          // Schedule the deactivation of the visual effect when the note ends
+          setTimeout(() => {
+              deactivateVisualEffect(box);
+          }, Tone.Time(value.duration).toMilliseconds());
+      }, [{
+          time: Tone.Time(box.ticks, 'i').toSeconds(),
+          name: note_pitch,
+          duration: note_duration
+      }]).start(); // Start the part to begin scheduling events
+  });
+  
+  // Start the Tone.Transport to begin playback
+  Tone.Transport.start();
 }
   
   // Helper function to convert Tone.js duration to milliseconds
@@ -644,8 +857,6 @@ let sketch2D = function(p) {
     pianoSynth.oscillator.type = "sine";
     pianoSynth.toDestination();
     setPianoKeyboard(p);
-
-    trackOrderToggle = new TrackOrderToggle(p.windowWidth - trackBallBase * 8, sketch2DHeight / 2);
   }
 
   p.draw = function() {
@@ -654,8 +865,6 @@ let sketch2D = function(p) {
     
     isMouseOverKeyboard = p.mouseX >= keyboardStartX && p.mouseX <= keyboardStartX + keyboardLength && p.mouseY >= 30 && p.mouseY <= 30 + whiteKeyHeight;
     keyboardEffects(p);
-
-    trackOrderToggle.display(p);
   }
 
   
@@ -664,15 +873,6 @@ let sketch2D = function(p) {
       currentNotePitch = clickPianoKeyboard();
       if (currentNotePitch && currentChoosedBox) {
         resetNoteBoxPitch();
-      }
-
-      // set track order
-      if (trackOrderToggle.isMouseOver(p)) {
-        if (trackOrderToggle.isReverse) {
-          trackOrderToggle.isReverse = false;
-        } else {
-          trackOrderToggle.isReverse = true;
-        }
       }
   }
 
