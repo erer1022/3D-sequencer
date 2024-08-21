@@ -195,7 +195,7 @@ let sketch3D = function(p) {
     deleteBoxButton.position(1300, 50);
     deleteBoxButton.id('DeleteBox');
 
-    let newTrackBallSpan = p.createSpan(`New trackBalls on the same track:`);
+    let newTrackBallSpan = p.createSpan(`New trackBalls playing track:`);
         newTrackBallSpan.style('width', '300px');
         newTrackBallSpan.style('height', '80px');
         newTrackBallSpan.position(1100, 690);
@@ -203,6 +203,8 @@ let sketch3D = function(p) {
     newTrackBallButton = p.createButton('+ add a new trackBall');
     newTrackBallButton.mousePressed(() => {
       if (numTracks - numOriginTracks < maxOriginTracks - 1) {
+        newTrackBallButton.html('now hover mouse onto boxes');
+        newTrackBallButton.attribute('disabled', '');  // Disable the button initially
           createNewTrackBall(p);
       } else {
         //alert("You can only add 4 new tracks");
@@ -243,7 +245,6 @@ let sketch3D = function(p) {
 
     // Setup tooltips
     setupTooltips();
-    
   }
 
   function setupTooltips() {
@@ -258,7 +259,7 @@ let sketch3D = function(p) {
         Tutorial: "Tutorial: <br>Click to start the tutorial.",
         Help: "Help: <br> Click to see more guidance <br> Click again to close the messages",
         AllTracks: "This button will <br>synthesize all the tracks",
-        NewTrackBall: "This button is for adding <br>new trackBall on the same track",
+        NewTrackBall: "This button is for <br>adding new trackBall",
         TrackOrder: "Toggle the trackBall's order<br> same order / reverse order",
         DeleteBox: "Choose the last added box<br>click on the button to delete it"
     };
@@ -318,7 +319,7 @@ let sketch3D = function(p) {
           Or, generate a new box around it.<br><br>
           Finally, click on the <strong>play button</strong> to hear your track!<br><br>
 
-          Click on the "?" button again to close the messages.
+          <strong>Click on the "?" button again to close the messages</strong>
     `);
     help_overall.style('width', '420px');
     help_overall.position(20, 300);
@@ -409,18 +410,21 @@ let sketch3D = function(p) {
 
     // -------------------------------------------- set the orbit control --------------------------------------------
     // Only if no box is chosen, enable orbit control
-    let boxChoosed = false;
-    for (let i = 0; i < defaultTrack.length; i++) {
-      if (defaultTrack[i].isChoosed) {
-        boxChoosed = true;
+    tracks.forEach(track => {
+      let anyBoxIsAdding = track.some(box => box.isAddingNewTrackBall); // Check if any box in the track is active
+      if (!anyBoxIsAdding) {
+        p.orbitControl(2); // Set the default trackball if no boxes are active
       }
-    }
-    if (!boxChoosed) {
-      p.orbitControl(3);
-    }
+    });
 
     // -------------------------------------------- Draw the trackBall --------------------------------------------
-    setDefaultTrackBall(p);
+    tracks.forEach(track => {
+      let anyBoxActive = track.some(box => box.isActivate); // Check if any box in the track is active
+      if (!anyBoxActive) {
+        setDefaultTrackBall(p); // Set the default trackball if no boxes are active
+      }
+    });
+    
     updateTrackBalls(p);
     trackBalls.forEach(ball => {
       ball.display(p);
@@ -488,6 +492,8 @@ let sketch3D = function(p) {
       let trackBall = trackBalls[i];
       let currentTrackInitialBox = tracks[i][0];
       let boxHeight = defaultPitch + (currentTrackInitialBox.pitch - defaultPitch) * 4;
+      
+      trackBall.x = currentTrackInitialBox.position.x + currentTrackInitialBox.duration * baseWidth / 2;
       trackBall.y = currentTrackInitialBox.position.y - boxHeight - trackBallBase;
     }
   }
@@ -586,6 +592,8 @@ let sketch3D = function(p) {
 
         // Call setNewTrackButton with the specific track's index
         setNewCloneTrack(index, trackIndex, p);
+        newTrackBallButton.html('+ add new trackBall');
+        newTrackBallButton.removeAttribute('disabled');
       }
     }
   }
@@ -685,7 +693,7 @@ function setNewCloneTrack(index, trackIndex, p) {
     for (let i = 0; i < tracks.length; i++) {
       let initialBox = tracks[i][0]
       trackBalls[i].x = initialBox.position.x + initialBox.duration * baseWidth / 2;
-      trackBalls[i].y = initialBox.position.y - initialBox.pitch - trackBallBase;
+      trackBalls[i].y = initialBox.position.y - (defaultPitch + (initialBox.pitch - defaultPitch) * 4) - trackBallBase;
       trackBalls[i].z = initialBox.position.z - baseWidth / 2;
     }
   }
@@ -715,10 +723,10 @@ function setNewCloneTrack(index, trackIndex, p) {
               // Schedule the synth to play the note with the specified parameters
               synths[i].triggerAttackRelease(value.name, value.duration, time);
 
-              activateVisualEffect(box);
+              activateVisualEffect(box, tracks[i].isReverseOrder);
               // Schedule the deactivation of the visual effect when the note ends
               setTimeout(() => {
-                  deactivateVisualEffect(box);
+                  deactivateVisualEffect(box, tracks[i].isReverseOrder);
               }, Tone.Time(value.duration).toMilliseconds());
           }, [{
               time: Tone.Time(box.ticks, 'i').toSeconds(),
@@ -755,10 +763,10 @@ function playTrack(track) {
           // Schedule the synth to play the note with the specified parameters
           synth.triggerAttackRelease(value.name, value.duration, time);
 
-          activateVisualEffect(box);
+          activateVisualEffect(box, track.isReverseOrder);
           // Schedule the deactivation of the visual effect when the note ends
           setTimeout(() => {
-              deactivateVisualEffect(box);
+              deactivateVisualEffect(box, track.isReverseOrder);
           }, Tone.Time(value.duration).toMilliseconds());
       }, [{
           time: Tone.Time(box.ticks, 'i').toSeconds(),
@@ -791,12 +799,11 @@ function playTrack(track) {
     }
   }
 
-  function activateVisualEffect(box) {
+  function activateVisualEffect(box, state) {
     // Activate the visual effect when the note is played
-    
     tracks.forEach(track => {
       track.forEach(noteBox => {
-        if (noteBox.position.equals(box.position)) { // Use equals method to compare p5.Vector positions
+        if (noteBox.position.equals(box.position) && track.isReverseOrder === state) { // Use equals method to compare p5.Vector positions
           noteBox.isActivate = true;
           noteBox.startTime = Tone.now();
         }
@@ -810,10 +817,10 @@ function playTrack(track) {
     }
   }
 
-  function deactivateVisualEffect(box) {
+  function deactivateVisualEffect(box, state) {
     tracks.forEach(track => {
       track.forEach(noteBox => {
-        if (noteBox.position.equals(box.position)) { // Use equals method to compare p5.Vector positions
+        if (noteBox.position.equals(box.position) && track.isReverseOrder === state) { // Use equals method to compare p5.Vector positions
           noteBox.isActivate = false;
         }
       });
@@ -1025,10 +1032,10 @@ function keyboardEffects(p) {
 function setKeyColor(p, key) {
   let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   let colors = [
-    'rgba(226, 165, 173, 200)', 'rgba(201, 147, 154, 200)', 'rgba(237, 205, 206, 200)', 
-    'rgba(209, 182, 183, 200)', 'rgba(239, 241, 254, 200)', 'rgba(246, 246, 246, 200)', 
-    'rgba(201, 192, 181, 200)', 'rgba(181, 199, 201, 200)', 'rgba(195, 217, 219, 200)', 
-    'rgba(136, 149, 177, 200)', 'rgba(118, 129, 153, 200)', 'rgba(84, 108, 140, 200)'
+    'rgba(226, 165, 173, 0.5)', 'rgba(201, 147, 154, 0.5)', 'rgba(237, 205, 206, 0.5)', 
+    'rgba(209, 182, 183, 0.5)', 'rgba(239, 241, 254, 0.5)', 'rgba(246, 246, 246, 0.5)', 
+    'rgba(201, 192, 181, 0.5)', 'rgba(181, 199, 201, 0.5)', 'rgba(195, 217, 219, 0.5)', 
+    'rgba(136, 149, 177, 0.5)', 'rgba(118, 129, 153, 0.5)', 'rgba(84, 108, 140, 0.5)'
   ];
 
   // Extract the note name from the key's note (e.g., C4 -> C)

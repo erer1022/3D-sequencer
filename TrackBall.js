@@ -24,19 +24,12 @@ class TrackBall {
   }
 
   display(p) {
-    //if (this.reachedTarget) return;
     p.push();
     p.translate(this.x, this.y, this.z);
-    // if (this.isJumping) {
-    //  p.rotateZ(this.angle);
-    // }
-    
     p.fill(181, 199, 201, 300);
     p.noStroke();
     //p.stroke(181, 199, 201);
     p.cone(trackBallBase, trackBallBase * 2);
     p.pop();
-
-    //this.angle += 1 / 100;
   }
 }

@@ -453,14 +453,14 @@ let sketch2D = function(p) {
     }
 
     function displayHelp(p) {
-      let help_builtIn = p.createSpan('STEP 1: Upload a midi file or <br> Choose a built-in file to visualize it');
+      let help_builtIn = p.createSpan('STEP 1: <strong>Upload</strong> a midi file or <br> <strong>Choose</strong> a built-in file to visualize it');
       help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
       help_builtIn.style('width', '280px');
       help_builtIn.style('color', '#9db2d4');
       help_builtIn.position(p.windowWidth / 12, p.windowHeight / 13 * 0.1);
       helps.push(help_builtIn);
 
-      let help_play = p.createSpan('STEP 2: Click the PLAY button to start the music');
+      let help_play = p.createSpan('STEP 2: Click the "▶︎" button to start the music');
       help_play.style('background', 'rgba(251, 251, 251, 0.3)');
       help_play.style('width', '320px');
       help_play.style('color', '#9db2d4');
@@ -489,8 +489,8 @@ let sketch2D = function(p) {
         let Tips_refresh = p.createSpan(`
           Tips: <br><br>
           If you experience performance issue<br>
-          Try to refreshing the page!<br><br>
-          Click the "?" button again to close the messages`);
+          Try to <strong>refreshing</strong> the page!<br><br>
+          <strong>Click the "?" button again to close the messages</strong>`);
           Tips_refresh.style('background', 'rgba(251, 251, 251, 0.3)');
           Tips_refresh.style('color', '#9db2d4');
           Tips_refresh.style('width', '340px');
@@ -499,7 +499,7 @@ let sketch2D = function(p) {
 
           // ---------------------------------- set color indicators ----------------------------------------------------
           let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-          let colors = ['rgba(226, 165, 173, 200)', 'rgba(201, 147, 154, 200)', 'rgba(237, 205, 206, 200)', 'rgba(209, 182, 183, 200)', 'rgba(239, 241, 254, 200)', 'rgba(246, 246, 246, 200)', 'rgba(201, 192, 181, 200)', 'rgba(181, 199, 201, 200)', 'rgba(195, 217, 219, 200)', 'rgba(136, 149, 177, 200)', 'rgba(118, 129, 153, 200)', 'rgba(84, 108, 140, 200)']
+          let colors = ['rgba(226, 165, 173, 0.5)', 'rgba(201, 147, 154, 0.5)', 'rgba(237, 205, 206, 0.5)', 'rgba(209, 182, 183, 0.5)', 'rgba(239, 241, 254, 0.5)', 'rgba(246, 246, 246, 0.5)', 'rgba(201, 192, 181, 0.5)', 'rgba(181, 199, 201, 0.5)', 'rgba(195, 217, 219, 0.5)', 'rgba(136, 149, 177, 0.5)', 'rgba(118, 129, 153, 0.5)', 'rgba(84, 108, 140, 0.5)']
           let positionX = p.windowWidth / 12 * 0.5;
           
           for (let i = 0; i < noteNames.length; i++) {
@@ -553,7 +553,7 @@ let sketch2D = function(p) {
             "011-Golden-Hour",
             "012-Mr-Lawrence-Merry-Christmas"
         ];
-        let positionY = p.windowHeight / 13 * 4;
+        let positionY = p.windowHeight / 13 * 3.5;
 
         midiFiles.forEach((file) => {
             let item = p.createElement('div', file);

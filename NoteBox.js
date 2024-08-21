@@ -29,12 +29,6 @@ class NoteBox {
         this.drawPotentialTrackBall(p);
       }
   
-      // set color effects
-      // let lowColor = p.color(255, 200, 200);  // Red for low pitch
-      // let highColor = p.color(200, 200, 255); // Blue for high pitch
-      // let opacity = 200;
-      // let pitchColor = this.getColorForPitch(p, lowColor, highColor, this.pitch, opacity);
-      // Map pitch to color with octave-based brightness adjustment
       let pitchColor = this.getColorForPitch(p, this.pitch);
 
       if (this.isMouseOver(p)) {
@@ -58,12 +52,6 @@ class NoteBox {
       p.pop();
     }
 
-    // getColorForPitch(p, lowColor, highColor, pitch, opacity) {
-    //   let normalizedPitch = pitch / 127.0;
-    //   let interpolatedColor = p.lerpColor(lowColor, highColor, normalizedPitch);
-    //   interpolatedColor.setAlpha(opacity); // Set the alpha (opacity) of the interpolated color
-    //   return interpolatedColor;
-    // }
     getColorForPitch(p, pitch) {
       // Define distinct colors for notes in one octave
       const colors = {
