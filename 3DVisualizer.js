@@ -539,7 +539,7 @@ let sketch2D = function(p) {
     }
 
     function loadBuiltInMidi(p, file) {
-        let fileUrl = `/3D-sequencer/builtInMidi/${file}.json`; // Construct the file URL based on the file name
+        let fileUrl = `/builtInMidi/${file}.json`; // Construct the file URL based on the file name
         
         p.loadJSON(fileUrl, (json) => {
             handleMidiJSON(json); // Use the existing function to handle the parsed MIDI JSON object

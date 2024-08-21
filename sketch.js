@@ -37,7 +37,7 @@ let visualizerButton;
 let sequencerButton;
 let tutorialButton;
 let allTracksButton;
-let originTrackButton;
+
 let newTrackBallButton;
 let deleteBoxButton;
 
@@ -57,6 +57,14 @@ let isMouseOverKeyboard = false;
 let showPotentialBox = false;
 let helpVisible = true;
 let isReverseOrder = false;
+let secondTrack;
+let secondTrackFirstClick = true;
+let thirdTrack;
+let thirdTrackFirstClick = true;
+let fourthTrack;
+let fourthTrackFirstClick = true;
+let fifthTrack;
+let fifthTrackFirstClick = true;
 
 // camera arguments
 let cam1;
@@ -95,50 +103,97 @@ let sketch3D = function(p) {
 
     // set the tone.synth
     //noteBoxSynth = new Tone.PolySynth().toMaster();
+    // -------------------------------------------- set the initial box --------------------------------------------
+    initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
+    defaultTrack.push(initialBox);
+    defaultTrack.isCloneTrack = false;
+    defaultTrack.isReverseOrder = false;
+    tracks.push(defaultTrack);
 
     // -------------------------------------------- Create button --------------------------------------------
     let playSpan = p.createSpan(`All tracks:`);
-        playSpan.style('width', '80px');
-        playSpan.style('height', '80px');
-        playSpan.position(100, 690);
+        playSpan.style('width', '480px');
+        playSpan.style('height', '110px');
+        playSpan.position(100, 660);
 
      allTracksButton = p.createButton('▶︎');
      allTracksButton.id('AllTracks');
      allTracksButton.mousePressed(() => playNote(p));
      allTracksButton.position(130, 735);
 
-    let track1 = p.createSpan(`Track 1:`);
-        track1.style('width', '80px');
-        track1.style('height', '80px');
-        track1.position(250, 690);
-
-     originTrackButton = p.createButton('▶︎');
-        //track1Button.mousePressed(() => playNote(p));
-        originTrackButton.position(280, 735);
-        originTrackButton.id('OriginTrack');
-        originTrackButton.mousePressed(() => playTrack(tracks[0]));
-
     let newTrackSpan = p.createSpan(`New tracks:`);
-        newTrackSpan.style('width', '300px');
+        newTrackSpan.style('width', '360px');
         newTrackSpan.style('height', '80px');
-        newTrackSpan.position(530, 690);
+        newTrackSpan.position(200, 690);
+
+     let originTrackButton = p.createButton('▶︎');
+        originTrackButton.mousePressed(() => playTrack(defaultTrack));
+        originTrackButton.position(230, 735);
+
+
+    let secondTrackButton = p.createButton(`+`);
+    secondTrackButton.mousePressed(() => {
+      if (secondTrackFirstClick) {
+        secondTrack = createNewTrack(p);
+        secondTrackButton.html('►');
+        secondTrackFirstClick = false;
+        // Enable the third track button
+        thirdTrackButton.removeAttribute('disabled');
+      } else {
+        playTrack(secondTrack);
+      }
+    });
+    secondTrackButton.position(300, 735);
+
+    let thirdTrackButton = p.createButton(`+`);
+    thirdTrackButton.attribute('disabled', '');  // Disable the button initially
+    thirdTrackButton.mousePressed(() => {
+      if (thirdTrackFirstClick) {
+        thirdTrack = createNewTrack(p);
+        thirdTrackButton.html('►');
+        thirdTrackFirstClick = false;
+        // Enable the fourth track button
+        fourthTrackButton.removeAttribute('disabled');
+      } else {
+        playTrack(thirdTrack);
+      }
+    });
+    thirdTrackButton.position(370, 735);
+
+    let fourthTrackButton = p.createButton(`+`);
+    fourthTrackButton.attribute('disabled', '');  // Disable the button initially
+    fourthTrackButton.mousePressed(() => {
+      if (fourthTrackFirstClick) {
+        fourthTrack = createNewTrack(p);
+        fourthTrackButton.html('►');
+        fourthTrackFirstClick = false;
+         // Enable the fifth track button
+         fifthTrackButton.removeAttribute('disabled');
+      } else {
+        playTrack(fourthTrack);
+      }
+    });
+    fourthTrackButton.position(440, 735);
+
+    let fifthTrackButton = p.createButton(`+`);
+    fifthTrackButton.attribute('disabled', '');  // Disable the button initially
+    fifthTrackButton.mousePressed(() => {
+      if (fifthTrackFirstClick) {
+        fifthTrack = createNewTrack(p);
+        fifthTrackButton.html('►');
+        fifthTrackFirstClick = false;
+      } else {
+        playTrack(fifthTrack);
+      }
+    });
+    fifthTrackButton.position(510, 735);
+
+    
 
     deleteBoxButton = p.createButton('- Delete note box');
     deleteBoxButton.mousePressed(deleteLatestBox);
     deleteBoxButton.position(1300, 50);
     deleteBoxButton.id('DeleteBox');
-
-    let newTrackButton = p.createButton(`+ new track`);
-    newTrackButton.mousePressed(() => {
-      if (numOriginTracks < maxOriginTracks) {
-          createNewTrack(p);
-      } else {
-        //alert("You can only add 4 new tracks");
-        newTrackButton.attribute('disabled', '');
-        newTrackButton.html('limit reached');
-      }
-    });
-    newTrackButton.position(400, 690);
 
     let newTrackBallSpan = p.createSpan(`New trackBalls on the same track:`);
         newTrackBallSpan.style('width', '300px');
@@ -189,16 +244,10 @@ let sketch3D = function(p) {
     // Setup tooltips
     setupTooltips();
     
-    // -------------------------------------------- set the initial box --------------------------------------------
-    initialBox = new NoteBox(p.createVector(0, 0, 0), default_duration, defaultPitch); // Initialize the default box
-    defaultTrack.push(initialBox);
-    defaultTrack.isCloneTrack = false;
-    defaultTrack.isReverseOrder = false;
-    tracks.push(defaultTrack);
   }
 
   function setupTooltips() {
-    const buttons = [visualizerButton, sequencerButton, tutorialButton, helpButton, allTracksButton, originTrackButton, newTrackBallButton, trackOrderToggle, deleteBoxButton];
+    const buttons = [visualizerButton, sequencerButton, tutorialButton, helpButton, allTracksButton, newTrackBallButton, trackOrderToggle, deleteBoxButton];
     const tooltip = p.createDiv('').addClass('tooltip');
     tooltip.hide();
 
@@ -209,7 +258,6 @@ let sketch3D = function(p) {
         Tutorial: "Tutorial: <br>Click to start the tutorial.",
         Help: "Help: <br> Click to see more guidance <br> Click again to close the messages",
         AllTracks: "This button will <br>synthesize all the tracks",
-        OriginTrack: "This button will <br>play the origin track",
         NewTrackBall: "This button is for adding <br>new trackBall on the same track",
         TrackOrder: "Toggle the trackBall's order<br> same order / reverse order",
         DeleteBox: "Choose the last added box<br>click on the button to delete it"
@@ -317,7 +365,7 @@ let sketch3D = function(p) {
 
   function createNewTrack(p) {
     // set the initial box of the new track
-    let newTrackInitialBox = new NoteBox(p.createVector(0, trackDepth * numOriginTracks, 0), default_duration, defaultPitch);
+    let newTrackInitialBox = new NoteBox(p.createVector(0, trackDepth * (numOriginTracks - 1), 0), default_duration, defaultPitch);
     let newTrack = [newTrackInitialBox];
     newTrack.isCloneTrack = false;
     newTrack.isReverseOrder = false;
@@ -332,10 +380,12 @@ let sketch3D = function(p) {
     numTracks++;
     numOriginTracks++;
 
+    return newTrack;
+
     // Create a play button for the new track
-    let playButton = p.createButton(`▶︎`);
-    playButton.position(500 + (numOriginTracks - 1) * 70, 735); // Adjust the position dynamically
-    playButton.mousePressed(() => playTrack(newTrack)); // Pass the correct track index
+    // let playButton = p.createButton(`▶︎`);
+    // playButton.position(500 + (numOriginTracks - 1) * 70, 735); // Adjust the position dynamically
+    // playButton.mousePressed(() => playTrack(newTrack)); // Pass the correct track index
   }
 
   p.draw = function() {
