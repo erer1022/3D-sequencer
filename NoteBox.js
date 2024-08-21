@@ -29,6 +29,13 @@ class NoteBox {
       }
   
       // set color effects
+      // let lowColor = p.color(255, 200, 200);  // Red for low pitch
+      // let highColor = p.color(200, 200, 255); // Blue for high pitch
+      // let opacity = 200;
+      // let pitchColor = this.getColorForPitch(p, lowColor, highColor, this.pitch, opacity);
+      // Map pitch to color with octave-based brightness adjustment
+      let pitchColor = this.getColorForPitch(p, this.pitch);
+
       if (this.isMouseOver(p)) {
         this.displayInfo(p);
         this.color = p.color(252, 227, 238, 150);
@@ -41,13 +48,55 @@ class NoteBox {
         this.color = p.color(203, 223, 247, 150);
         this.displayInfo(p);
       } else {
-        this.color = p.color(210, 225, 250);
+        this.color = pitchColor;
       }
   
       p.fill(this.color);
       p.translate(this.position.x + boxWidth / 2, this.position.y - boxHeight / 2, this.position.z - baseWidth / 2);
       p.box(boxWidth, boxHeight, baseWidth); // Adjust the box size based on the duration
       p.pop();
+    }
+
+    // getColorForPitch(p, lowColor, highColor, pitch, opacity) {
+    //   let normalizedPitch = pitch / 127.0;
+    //   let interpolatedColor = p.lerpColor(lowColor, highColor, normalizedPitch);
+    //   interpolatedColor.setAlpha(opacity); // Set the alpha (opacity) of the interpolated color
+    //   return interpolatedColor;
+    // }
+    getColorForPitch(p, pitch) {
+      // Define distinct colors for notes in one octave
+      const colors = {
+        0: p.color(247, 161, 158),    // C - Red
+        1: p.color(252, 220, 172),  // C#/Db - Orange
+        2: p.color(252, 251, 172),  // D - Yellow
+        3: p.color(198, 255, 186),    // D#/Eb - Green
+        4: p.color(183, 246, 247),  // E - Cyan
+        5: p.color(184, 227, 252),    // F - Blue
+        6: p.color(192, 218, 252),   // F#/Gb - Indigo
+        7: p.color(231, 202, 252),// G - Violet
+        8: p.color(236, 177, 252),  // G#/Ab - Purple
+        9: p.color(250, 190, 223),// A - Pink
+        10: p.color(250, 155, 207),// A#/Bb - Hot Pink
+        11: p.color(203, 111, 252)  // B - Dark Purple
+      };
+
+      // Determine the note within the octave and the octave number
+      let noteInOctave = pitch % 12;
+      let octave = Math.floor(pitch / 12);
+
+      // Get the base color for the note
+      let baseColor = colors[noteInOctave];
+
+      // Adjust the brightness based on the octave (higher octave = less brightness)
+      let brightnessFactor = 1 - (octave / 10.0); // Assuming up to 10 octaves; adjust as needed
+      let adjustedColor = p.color(
+        p.red(baseColor) * brightnessFactor,
+        p.green(baseColor) * brightnessFactor,
+        p.blue(baseColor) * brightnessFactor,
+        200
+      );
+
+      return adjustedColor;
     }
 
     drawPotentialTrackBall(p) {

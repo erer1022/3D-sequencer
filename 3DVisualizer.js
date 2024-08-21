@@ -281,7 +281,7 @@ let sketch2D = function(p) {
       CW.tempoOffset = 0;
 
         fileDrop = p.createFileInput(handleMidiFile);
-        fileDrop.position(200, 60);
+        fileDrop.position(p.windowWidth / 12, p.windowHeight / 13 * 1.5);
         // Use the changed method to handle new file upload
         fileDrop.changed(() => {
             let file = fileDrop.elt.files[0];
@@ -292,64 +292,47 @@ let sketch2D = function(p) {
 
         // -------------------------------------------- Tone.Transportation data --------------------------------------------
         ticksSpan = p.createSpan(`Ticks: 0`);
-        ticksSpan.position(600, 60);
+        ticksSpan.position(p.windowWidth / 12 * 6.0, p.windowHeight / 13 * 2.8);
 
         // Create a span for position
         positionSpan = p.createSpan('Position 0:0');
-        positionSpan.position(450, 60);
+        positionSpan.position(p.windowWidth / 12 * 4.8, p.windowHeight / 13 * 2.8);
 
         // Create a span for BPM
         bpmSpan = p.createSpan('BPM: 0');
-        bpmSpan.position(750, 60);
-
-        let help_mouse = p.createSpan(`
-          Tips: <br><br>
-          When the music is NOT playing: <br>
-          Adjust the viewpoint by dragging the mouse <br>
-          or using the mouse wheel!<br><br>
-          Try to click on the box!`);
-          help_mouse.style('width', '300px');
-          help_mouse.position(950, 60);
-
-          let Tips_refresh = p.createSpan(`
-            Tips: <br><br>
-            If you experience performance issue<br>
-            Try to refreshing the page!`);
-            Tips_refresh.style('width', '300px');
-            Tips_refresh.style('height', '90px');
-            Tips_refresh.position(850, 690);
+        bpmSpan.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 2.8);
         
 
         // -------------------------------------------- tempo setting block
         let tempoSpan = p.createSpan(`TEMPO SETTING:`);
-        tempoSpan.style('width', '270px');
-        tempoSpan.style('height', '90px');
-        tempoSpan.position(400, 690);
+        tempoSpan.style('width', '340px');
+        tempoSpan.style('height', '150px');
+        tempoSpan.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13);
 
         upButton = p.createButton(`UP`);
         upButton.attribute('disabled', '');
         upButton.mousePressed(() => changeTempo(`UP`));
-        upButton.position(420, 730);
+        upButton.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 1.8);
 
         downButton = p.createButton(`DOWN`);
         downButton.attribute('disabled', '');
         downButton.mousePressed(() => changeTempo(`DOWN`));
-        downButton.position(500, 730);
+        downButton.position(p.windowWidth / 12 * 9.5, p.windowHeight / 13 * 1.8);
 
         resetButton = p.createButton(`RESET`);
         resetButton.attribute('disabled', '');
         resetButton.mousePressed(() => changeTempo(`RESET`));
-        resetButton.position(600, 730);
+        resetButton.position(p.windowWidth / 12 * 10.4, p.windowHeight / 13 * 1.8);
 
         // -------------------------------------------- playing setting block --------------------------------------------
         let playSpan = p.createSpan(`PLAY SETTING:`);
-        playSpan.style('width', '160px');
-        playSpan.style('height', '90px');
-        playSpan.position(80, 690);
+        playSpan.style('width', '320px');
+        playSpan.style('height', '150px');
+        playSpan.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13);
 
 
         playToggle = p.createButton('▶︎');
-        playToggle.position(200, 730);
+        playToggle.position(p.windowWidth / 12 * 4.8, p.windowHeight / 13 * 1.8);
         playToggle.attribute('disabled', 'true');
 
         // Adding mousePressed event listener to the button
@@ -373,7 +356,7 @@ let sketch2D = function(p) {
         rewindButton = p.createButton(`REWIND`);
         rewindButton.attribute('disabled', '');
         rewindButton.mousePressed(rewindMusic);
-        rewindButton.position(100, 730);
+        rewindButton.position(p.windowWidth / 12 * 5.4, p.windowHeight / 13 * 1.8);
 
         // -------------------------------------------- Built-ins Setting -------------------------------------------- 
         builtInButton = p.createButton(`🎼 🎵 🎶`);
@@ -381,7 +364,7 @@ let sketch2D = function(p) {
             builtInButton.style('background', '#b3cbf2')
         });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
-        builtInButton.position(p.windowWidth - 100, 60);
+        builtInButton.position(p.windowWidth / 12, p.windowHeight / 13 * 2.5);
     }
 
     function setupTooltips() {
@@ -460,33 +443,49 @@ let sketch2D = function(p) {
     }
 
     function displayHelp(p) {
-      let help_upload = p.createSpan('STEP 1: Upload a midi file to visualize it');
-      help_upload.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_upload.style('width', '280px');
-      help_upload.style('color', '#9db2d4');
-      help_upload.position(200, 10);
-      helps.push(help_upload);
-
-      let help_builtIn = p.createSpan('STEP 1: Choose a built-in file to visualize it');
+      let help_builtIn = p.createSpan('STEP 1: Upload a midi file or <br> Choose a built-in file to visualize it');
       help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
       help_builtIn.style('width', '280px');
       help_builtIn.style('color', '#9db2d4');
-      help_builtIn.position(1150, 10);
+      help_builtIn.position(p.windowWidth / 12, p.windowHeight / 13 * 0.1);
       helps.push(help_builtIn);
 
       let help_play = p.createSpan('STEP 2: Click the PLAY button to start the music');
       help_play.style('background', 'rgba(251, 251, 251, 0.3)');
       help_play.style('width', '320px');
       help_play.style('color', '#9db2d4');
-      help_play.position(80, 630);
+      help_play.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13 * 0.1);
       helps.push(help_play);
 
       let help_tempo = p.createSpan('STEP 3: Adjust the TEMPO to experience variations');
       help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_tempo.style('width', '350px');
+      help_tempo.style('width', '340px');
       help_tempo.style('color', '#9db2d4');
-      help_tempo.position(850, 630);
+      help_tempo.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13 * 0.1);
       helps.push(help_tempo);
+
+      let help_mouse = p.createSpan(`
+        Tips: <br><br>
+        When the music is NOT playing: <br>
+        Adjust the viewpoint by dragging the mouse <br>
+        or using the mouse wheel!<br><br>
+        Try to click on the box!`);
+        help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
+        help_mouse.style('color', '#9db2d4');
+        help_mouse.style('width', '300px');
+        help_mouse.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13 * 5);
+        helps.push(help_mouse);
+
+        let Tips_refresh = p.createSpan(`
+          Tips: <br><br>
+          If you experience performance issue<br>
+          Try to refreshing the page!<br><br>
+          Click the "?" button again to close the messages`);
+          Tips_refresh.style('background', 'rgba(251, 251, 251, 0.3)');
+          Tips_refresh.style('color', '#9db2d4');
+          Tips_refresh.style('width', '340px');
+          Tips_refresh.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13 * 5);
+          helps.push(Tips_refresh);
     }
 
     function hideHelp() {
@@ -525,14 +524,14 @@ let sketch2D = function(p) {
             "011-Golden-Hour",
             "012-Mr-Lawrence-Merry-Christmas"
         ];
-        let positionY = 120;
+        let positionY = p.windowHeight / 13 * 4;
 
         midiFiles.forEach((file) => {
             let item = p.createElement('div', file);
             item.mouseOver(() => item.style('background-color', '#555'));
             item.mouseOut(() => item.style('background-color', 'rgba(51, 51, 51, 0.05)'));
             item.mousePressed(() => loadBuiltInMidi(p, file));
-            item.position(p.windowWidth - 350, positionY);
+            item.position(p.windowWidth / 12, positionY);
             item.class('builtIns');
             positionY += 35;
             builtInMidis.push(item);
