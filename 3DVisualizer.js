@@ -365,6 +365,16 @@ let sketch2D = function(p) {
         });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
         builtInButton.position(p.windowWidth / 12, p.windowHeight / 13 * 2.5);
+
+        // -------------------------------------------- Set color indicator -------------------------------------------- 
+        setColorIndicator(p);
+        
+    }
+
+    function setColorIndicator(p) {
+ 
+
+
     }
 
     function setupTooltips() {
@@ -486,6 +496,25 @@ let sketch2D = function(p) {
           Tips_refresh.style('width', '340px');
           Tips_refresh.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13 * 5);
           helps.push(Tips_refresh);
+
+          // ---------------------------------- set color indicators ----------------------------------------------------
+          let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+          let colors = ['rgba(226, 165, 173, 200)', 'rgba(201, 147, 154, 200)', 'rgba(237, 205, 206, 200)', 'rgba(209, 182, 183, 200)', 'rgba(239, 241, 254, 200)', 'rgba(246, 246, 246, 200)', 'rgba(201, 192, 181, 200)', 'rgba(181, 199, 201, 200)', 'rgba(195, 217, 219, 200)', 'rgba(136, 149, 177, 200)', 'rgba(118, 129, 153, 200)', 'rgba(84, 108, 140, 200)']
+          let positionX = p.windowWidth / 12 * 0.5;
+          
+          for (let i = 0; i < noteNames.length; i++) {
+            let newSpan = p.createSpan(`${noteNames[i]}`);
+            newSpan.style('background', colors[i]);
+            newSpan.style('width', '3px');
+            newSpan.style('height', '40px');
+            newSpan.style('align-items', 'center');
+            newSpan.style('justify-content', 'center');
+            newSpan.style('display', 'flex');
+
+            newSpan.position(positionX, p.windowHeight / 13 * 11.5);
+            positionX += 40;
+            helps.push(newSpan);
+          }
     }
 
     function hideHelp() {
@@ -539,7 +568,7 @@ let sketch2D = function(p) {
     }
 
     function loadBuiltInMidi(p, file) {
-        let fileUrl = `/3D-sequencer/builtInMidi/${file}.json`; // Construct the file URL based on the file name
+        let fileUrl = `/builtInMidi/${file}.json`; // Construct the file URL based on the file name
         
         p.loadJSON(fileUrl, (json) => {
             handleMidiJSON(json); // Use the existing function to handle the parsed MIDI JSON object

@@ -1007,16 +1007,38 @@ function keyboardEffects(p) {
     if (isMouseOverKeyboard) {
       key.lighten(p);
       if (key.isMouseOver(p)) {
-        key.color = p.color(200, 218, 247);
+        //key.color = p.color(200, 218, 247);
+        setKeyColor(p, key);
       } 
     } else {
       key.darken(p);
     }
 
     if (key.isActivate) {
-      key.color = p.color(200, 218, 247);
+      //key.color = p.color(200, 218, 247);
+      setKeyColor(p, key);
     } 
     key.display(p);
+  }
+}
+
+function setKeyColor(p, key) {
+  let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  let colors = [
+    'rgba(226, 165, 173, 200)', 'rgba(201, 147, 154, 200)', 'rgba(237, 205, 206, 200)', 
+    'rgba(209, 182, 183, 200)', 'rgba(239, 241, 254, 200)', 'rgba(246, 246, 246, 200)', 
+    'rgba(201, 192, 181, 200)', 'rgba(181, 199, 201, 200)', 'rgba(195, 217, 219, 200)', 
+    'rgba(136, 149, 177, 200)', 'rgba(118, 129, 153, 200)', 'rgba(84, 108, 140, 200)'
+  ];
+
+  // Extract the note name from the key's note (e.g., C4 -> C)
+  let noteName = key.note.slice(0, -1); // This removes the last character which represents the octave (e.g., 4)
+
+  for (let i = 0; i < noteNames.length; i++) {
+    if (noteName === noteNames[i]) {
+      key.color = p.color(colors[i]);
+      break;
+    }
   }
 }
 

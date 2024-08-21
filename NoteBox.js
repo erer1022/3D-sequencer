@@ -19,7 +19,8 @@ class NoteBox {
       p.push();
       p.smooth();
       p.lights();
-      p.stroke(200);
+      
+      p.stroke(210);
       
       let boxWidth = baseWidth * this.duration;
       let boxHeight = defaultPitch + (this.pitch - defaultPitch) * 4;
@@ -66,18 +67,18 @@ class NoteBox {
     getColorForPitch(p, pitch) {
       // Define distinct colors for notes in one octave
       const colors = {
-        0: p.color(247, 161, 158),    // C - Red
-        1: p.color(252, 220, 172),  // C#/Db - Orange
-        2: p.color(252, 251, 172),  // D - Yellow
-        3: p.color(198, 255, 186),    // D#/Eb - Green
-        4: p.color(183, 246, 247),  // E - Cyan
-        5: p.color(184, 227, 252),    // F - Blue
-        6: p.color(192, 218, 252),   // F#/Gb - Indigo
-        7: p.color(231, 202, 252),// G - Violet
-        8: p.color(236, 177, 252),  // G#/Ab - Purple
-        9: p.color(250, 190, 223),// A - Pink
-        10: p.color(250, 155, 207),// A#/Bb - Hot Pink
-        11: p.color(203, 111, 252)  // B - Dark Purple
+        0: p.color(226, 165, 173),    // C - Red
+        1: p.color(201, 147, 154),  // C#/Db 
+        2: p.color(237, 205, 206),  // D 
+        3: p.color(209, 182, 183),    // D#/Eb 
+        4: p.color(239, 241, 254),  // E 
+        5: p.color(246, 246, 246),    // F 
+        6: p.color(201, 192, 181),   // F#/Gb
+        7: p.color(181, 199, 201),// G - Violet
+        8: p.color(195, 217, 219),  // G#/Ab - Purple
+        9: p.color(136, 149, 177),// A - Pink
+        10: p.color(118, 129, 153),// A#/Bb - Hot Pink
+        11: p.color(84, 108, 140)  // B - Dark Purple
       };
 
       // Determine the note within the octave and the octave number
@@ -90,12 +91,11 @@ class NoteBox {
       // Adjust the brightness based on the octave (higher octave = less brightness)
       let brightnessFactor = 1 - (octave / 10.0); // Assuming up to 10 octaves; adjust as needed
       let adjustedColor = p.color(
-        p.red(baseColor) * brightnessFactor,
-        p.green(baseColor) * brightnessFactor,
-        p.blue(baseColor) * brightnessFactor,
+        p.red(baseColor),
+        p.green(baseColor),
+        p.blue(baseColor),
         200
       );
-
       return adjustedColor;
     }
 
