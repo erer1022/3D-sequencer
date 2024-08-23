@@ -14,7 +14,11 @@
     </style>
   </head>
   <body>
-    <script src="tutorial.js"></script>
+    <script src="boxSequencer.js"></script>
+    <script src="NoteBox.js"></script>
+    <script src="TrackBall.js"></script>
+    <script src="Key.js"></script>
+    <script src="NoteDuration.js"></script>
 
     <div id="3d-container"></div>
     <div id="2d-container"></div>
@@ -23,9 +27,8 @@
     <button id="Visualizer">V</button>
     <button id="Sequencer">S</button>
     <button id="Tutorial">T</button>
-
-    <button class="tutorialButton" id="NoteDurationTutorial">Note Duration Tutorial</button>
-    <button class="tutorialButton" id="NotePitchTutorial">Note Pitch Tutorial</button>
+    <button id="Help">?</button>
+    
 
     <script>
       document.getElementById('Visualizer').addEventListener('click', function() {
@@ -33,19 +36,11 @@
       });
 
       document.getElementById('Sequencer').addEventListener('click', function() {
-        window.location.href = 'index.html';
+        window.location.href = 'boxSequencer.html';
       });
 
       document.getElementById('Tutorial').addEventListener('click', function() {
-        window.location.href = 'tutorial.html';
-      });
-
-      document.getElementById('NoteDurationTutorial').addEventListener('click', function() {
-        window.location.href = 'NoteDurationTutorial.html';
-      });
-
-      document.getElementById('NotePitchTutorial').addEventListener('click', function() {
-        window.location.href = 'NotePitchTutorial.html';
+        window.location.href = 'index.html';
       });
 
     </script>

@@ -7,10 +7,6 @@ html, body {
     display: block;
   }
 
-
-
- 
-
 /* CSS */
 button {
   align-items: center;
@@ -84,8 +80,6 @@ span {
   -webkit-user-select: none;
   touch-action: manipulation;
   width: 100px; /* Fixed width */
-
-  
 }
 
 .noteSpan {
@@ -198,5 +192,20 @@ input[type="file"]::file-selector-button:hover {
   opacity: 0;
   transition: opacity 0.3s;
 }
+
+/* for the introduction page*/
+.intro {
+  background: rgba(51, 51, 51, 0.9);
+  width: 600px;
+  height: 450px;
+  font-size: 18px;
+  white-space: normal;  /* Ensure text wraps within the span */
+  display: inline;  /* Show all help elements */
+  padding: 20px 20px;  /* Optional: add some padding */
+  border-radius: 15px;  /* Optional: add rounded corners */
+  color: #ccc5c5;  /* Optional: change text color */
+}
+
+
 
 
