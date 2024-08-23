@@ -1,5 +1,6 @@
 let font;
 let pianoSynth;
+let logo;
 //let noteBoxSynth;
 let initialBox;
 let currentNotePitch;
@@ -27,6 +28,7 @@ let sketch3DHeight = 700;
 let sketch2DHeight = 150;
 let defaultPitch = 60; // set to middle C
 
+
 let defaultBPM = 60; // 60 BPM means 1 beat per second
 let PPQ = 48; // Pulses Per Quarter note (1 second per quarter note)
 let baseWidth = 4 * PPQ; // Each whole note duration corresponds to 240 ticks
@@ -52,6 +54,8 @@ let currentTrack = 0; // Index to keep track of the current track
 let trackButtons = [];
 let buttonY = 10;
 let helps = [];
+let buttons = [];
+let spans = [];
 
 let isMouseOverKeyboard = false;
 let showPotentialBox = false;
@@ -95,11 +99,12 @@ let sketch3D = function(p) {
     // basic setting
     p.createCanvas(p.windowWidth, sketch3DHeight, p.WEBGL).parent('3d-container'); // Create a 3D canvas
     
+    
     cam1 = p.createCamera();
     p.perspective(p.PI / 3, p.width / p.height, ((p.height / 2) / p.tan(p.PI / 6)) / 10, ((p.height / 2) / p.tan(p.PI / 6)) * 100);
     // Set the initial camera position and look at a specific point
     cam1.setPosition(500, -800, 1000); // Adjust the position (x, y, z) as needed
-    cam1.lookAt(0, 0, 0); // Point the camera at the origin
+    cam1.lookAt(0, 300, 0); // Point the camera at the origin
 
     // set the tone.synth
     //noteBoxSynth = new Tone.PolySynth().toMaster();
@@ -115,6 +120,7 @@ let sketch3D = function(p) {
         playSpan.style('width', '480px');
         playSpan.style('height', '110px');
         playSpan.position(100, 660);
+        //spans.push({ span: playSpan, xPercent: 0.2, yPercent: 0.9 });
 
      allTracksButton = p.createButton('▶︎');
      allTracksButton.id('AllTracks');
@@ -227,21 +233,21 @@ let sketch3D = function(p) {
     // ------------------------------------------------------------------------------------------------
 
     visualizerButton = p.select('#Visualizer');
-    visualizerButton.position(20, 50);
+    visualizerButton.position(20, 100);
 
     sequencerButton = p.select('#Sequencer');
-    sequencerButton.position(20, 110);
+    sequencerButton.position(20, 160);
     sequencerButton.style('background', '#b3cbf2');
     sequencerButton.style('color', '#000307');
 
     tutorialButton = p.select('#Tutorial');
-    tutorialButton.position(20, 170);
+    tutorialButton.position(20, 220);
 
     helpButton = p.select('#Help');
     helpButton.style('background', '#b3cbf2');
     displayHelp(p);
     helpButton.mousePressed(() => toggleHelpButton(p));
-    helpButton.position(20, 230);
+    helpButton.position(20, 280);
 
     // Setup tooltips
     setupTooltips();
@@ -322,7 +328,7 @@ let sketch3D = function(p) {
           <strong>Click on the "?" button again to close the messages</strong>
     `);
     help_overall.style('width', '420px');
-    help_overall.position(20, 300);
+    help_overall.position(100, 300);
 
       helps.push(help_overall);
 
@@ -366,7 +372,7 @@ let sketch3D = function(p) {
 
   function createNewTrack(p) {
     // set the initial box of the new track
-    let newTrackInitialBox = new NoteBox(p.createVector(0, trackDepth * (numOriginTracks - 1), 0), default_duration, defaultPitch);
+    let newTrackInitialBox = new NoteBox(p.createVector(0, trackDepth * numOriginTracks, 0), default_duration, defaultPitch);
     let newTrack = [newTrackInitialBox];
     newTrack.isCloneTrack = false;
     newTrack.isReverseOrder = false;
@@ -638,6 +644,10 @@ let sketch3D = function(p) {
         }
     }
   } 
+
+  p.mouseDragged = function() {
+      camY += (p.pmouseY - p.mouseY);
+  }
 }
 
 
@@ -910,6 +920,10 @@ let sketch2D = function(p) {
   }
 
   p.setup = function() {
+    logo = p.createImg('./pictures/logo.png', 'logo');
+      logo.position(0, 0);
+      logo.size(170, 90);
+
     p.createCanvas(p.windowWidth, sketch2DHeight).parent('2d-container');
     // Set the piano
     pianoSynth = new Tone.Synth();

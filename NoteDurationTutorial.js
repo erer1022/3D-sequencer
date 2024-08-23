@@ -174,15 +174,18 @@ let sketch2D = function(p) {
   
     p.setup = function() {
       p.createCanvas(p.windowWidth, sketch2DHeight).parent('2d-container');
+      logo = p.createImg('./pictures/logo.png', 'logo');
+      logo.position(0, 0);
+      logo.size(170, 90);
 
       let visualizerButton = p.select('#Visualizer');
-      visualizerButton.position(20, 50);
+      visualizerButton.position(20, 100);
   
       let sequencerButton = p.select('#Sequencer');
-      sequencerButton.position(20, 110);
+      sequencerButton.position(20, 160);
   
       let tutorialButton = p.select('#Tutorial');
-      tutorialButton.position(20, 170);
+      tutorialButton.position(20, 220);
       tutorialButton.style('background', '#b3cbf2');
       tutorialButton.style('color', '#000307');
 

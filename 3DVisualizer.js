@@ -43,12 +43,15 @@ let currentTime;
 let currentTimeInSeconds;
 let myBar;
 let lastBarValue = 0;
+let logo;
 
 let bars = [];
 let trackNoteBoxes = [];
 let tracks = [];  // for midi data
 let builtInMidis = [];
 let helps = [];
+let spans = [];
+let buttons = [];
 
 let boxSynth;
 // camera arguments
@@ -62,6 +65,7 @@ let xMag;
 
 function preload() {
     font = loadFont('./Roboto/Roboto-Black.ttf');
+    // logo = loadImage('./pictures/logo.png');
   }
 
   // 3D Canvas
@@ -256,23 +260,26 @@ let sketch2D = function(p) {
   
     p.setup = function() {
       p.createCanvas(p.windowWidth, sketch2DHeight).parent('2d-container');
+      logo = p.createImg('./pictures/logo.png', 'logo');
+      logo.position(0, 0);
+      logo.size(170, 90);
 
       visualizerButton = p.select('#Visualizer');
-      visualizerButton.position(20, 50);
       visualizerButton.style('background', '#b3cbf2');
       visualizerButton.style('color', '#000307');
+      buttons.push({ button: visualizerButton, xPercent: 0.015, yPercent: 0.15});
   
       sequencerButton = p.select('#Sequencer');
-      sequencerButton.position(20, 110);
-  
+      buttons.push({ button: sequencerButton, xPercent: 0.015, yPercent: 0.23});
+
       tutorialButton = p.select('#Tutorial');
-      tutorialButton.position(20, 170);
+      buttons.push({ button: tutorialButton, xPercent: 0.015, yPercent: 0.31});
 
       helpButton = p.select('#Help');
       helpButton.style('background', '#b3cbf2');
       displayHelp(p);
       helpButton.mousePressed(() => toggleHelpButton(p));
-      helpButton.position(20, 230);
+      buttons.push({ button: helpButton, xPercent: 0.015, yPercent: 0.39});
 
       // Setup tooltips
       setupTooltips();
@@ -281,7 +288,7 @@ let sketch2D = function(p) {
       CW.tempoOffset = 0;
 
         fileDrop = p.createFileInput(handleMidiFile);
-        fileDrop.position(p.windowWidth / 12, p.windowHeight / 13 * 1.5);
+        fileDrop.position(p.windowWidth * 0.17, p.windowHeight / 13 * 1.5);
         // Use the changed method to handle new file upload
         fileDrop.changed(() => {
             let file = fileDrop.elt.files[0];
@@ -291,48 +298,50 @@ let sketch2D = function(p) {
         });
 
         // -------------------------------------------- Tone.Transportation data --------------------------------------------
-        ticksSpan = p.createSpan(`Ticks: 0`);
-        ticksSpan.position(p.windowWidth / 12 * 6.0, p.windowHeight / 13 * 2.8);
-
-        // Create a span for position
-        positionSpan = p.createSpan('Position 0:0');
-        positionSpan.position(p.windowWidth / 12 * 4.8, p.windowHeight / 13 * 2.8);
+        
 
         // Create a span for BPM
         bpmSpan = p.createSpan('BPM: 0');
-        bpmSpan.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 2.8);
-        
+        //bpmSpan.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 2.8);
+        spans.push({ span: bpmSpan, xPercent: 0.73, yPercent: 0.22, wPercent: 0.07, hPercent: 0.023  });
 
         // -------------------------------------------- tempo setting block
         let tempoSpan = p.createSpan(`TEMPO SETTING:`);
         tempoSpan.style('width', '340px');
         tempoSpan.style('height', '150px');
-        tempoSpan.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13);
+        spans.push({ span: tempoSpan, xPercent: 0.7, yPercent: 0.08, wPercent: 0.24, hPercent: 0.2 }); 
 
         upButton = p.createButton(`UP`);
         upButton.attribute('disabled', '');
         upButton.mousePressed(() => changeTempo(`UP`));
-        upButton.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 1.8);
+        
+        buttons.push({ button: upButton, xPercent: 0.73, yPercent: 0.14 });
 
         downButton = p.createButton(`DOWN`);
         downButton.attribute('disabled', '');
         downButton.mousePressed(() => changeTempo(`DOWN`));
-        downButton.position(p.windowWidth / 12 * 9.5, p.windowHeight / 13 * 1.8);
+        buttons.push({ button: downButton, xPercent: 0.79, yPercent: 0.14 });
 
         resetButton = p.createButton(`RESET`);
         resetButton.attribute('disabled', '');
         resetButton.mousePressed(() => changeTempo(`RESET`));
-        resetButton.position(p.windowWidth / 12 * 10.4, p.windowHeight / 13 * 1.8);
+        buttons.push({ button: resetButton, xPercent: 0.87, yPercent: 0.14 });
 
         // -------------------------------------------- playing setting block --------------------------------------------
         let playSpan = p.createSpan(`PLAY SETTING:`);
-        playSpan.style('width', '320px');
-        playSpan.style('height', '150px');
-        playSpan.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13);
+        let width = p.windowWidth * 0.22;
+        spans.push({ span: playSpan, xPercent: 0.4, yPercent: 0.08, wPercent: 0.22, hPercent: 0.2 }); 
+
+        ticksSpan = p.createSpan(`Ticks: 0`);
+        spans.push({ span: ticksSpan, xPercent: 0.52, yPercent: 0.22, wPercent: 0.07, hPercent: 0.023  }); 
+
+        // Create a span for position
+        positionSpan = p.createSpan('Position 0:0');
+        spans.push({ span: positionSpan, xPercent: 0.42, yPercent: 0.22, wPercent: 0.07, hPercent: 0.023 }); 
 
 
         playToggle = p.createButton('▶︎');
-        playToggle.position(p.windowWidth / 12 * 4.8, p.windowHeight / 13 * 1.8);
+        buttons.push({ button: playToggle, xPercent: 0.42, yPercent: 0.14 }); 
         playToggle.attribute('disabled', 'true');
 
         // Adding mousePressed event listener to the button
@@ -356,7 +365,7 @@ let sketch2D = function(p) {
         rewindButton = p.createButton(`REWIND`);
         rewindButton.attribute('disabled', '');
         rewindButton.mousePressed(rewindMusic);
-        rewindButton.position(p.windowWidth / 12 * 5.4, p.windowHeight / 13 * 1.8);
+        buttons.push({ button: rewindButton, xPercent: 0.47, yPercent: 0.14 }); 
 
         // -------------------------------------------- Built-ins Setting -------------------------------------------- 
         builtInButton = p.createButton(`🎼 🎵 🎶`);
@@ -364,18 +373,52 @@ let sketch2D = function(p) {
             builtInButton.style('background', '#b3cbf2')
         });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
-        builtInButton.position(p.windowWidth / 12, p.windowHeight / 13 * 2.5);
+        builtInButton.position(p.windowWidth * 0.17, p.windowHeight / 13 * 2.5);
 
-        // -------------------------------------------- Set color indicator -------------------------------------------- 
-        setColorIndicator(p);
-        
+
+        // Set initial positions
+        spans.forEach(s => {
+          setSpanPositionAndSize(s.span, s.xPercent, s.yPercent, s.wPercent, s.hPercent);
+        });
+
+        buttons.forEach(b => {
+          setButtonPosition(b.button, b.xPercent, b.yPercent);
+        });
     }
 
-    function setColorIndicator(p) {
- 
-
-
+    function setButtonPosition(button, xPercent, yPercent) {
+      let xPos = p.windowWidth * xPercent;
+      let yPos = p.windowHeight * yPercent;
+      button.position(xPos, yPos);
     }
+
+    function setSpanPositionAndSize(span, xPercent, yPercent, widthPercent, heightPercent) {
+      let xPos = p.windowWidth * xPercent;
+      let yPos = p.windowHeight * yPercent;
+      let width = p.windowWidth * widthPercent;
+      let height = p.windowHeight * heightPercent;
+      
+      span.position(xPos, yPos);
+      span.style('width', `${width}px`);
+      span.style('height', `${height}px`);
+    }
+
+    function windowResized() {
+      p.resizeCanvas(p.windowWidth, p.windowHeight);
+      
+      //Update positions of all spans
+      spans.forEach(s => {
+        setSpanPositionAndSize(s.span, s.xPercent, s.yPercent, s.wPercent, s.hPercent);
+      });
+    
+      // Update positions of all buttons
+      buttons.forEach(b => {
+        setButtonPosition(b.button, b.xPercent, b.yPercent);
+      });
+    }
+    
+    p.windowResized = windowResized;  // Attach the window resize event
+    
 
     function setupTooltips() {
       const buttons = [visualizerButton, sequencerButton, tutorialButton, helpButton];
@@ -453,73 +496,72 @@ let sketch2D = function(p) {
     }
 
     function displayHelp(p) {
-      let help_builtIn = p.createSpan('STEP 1: <strong>Upload</strong> a midi file or <br> <strong>Choose</strong> a built-in file to visualize it');
-      help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_builtIn.style('width', '280px');
-      help_builtIn.style('color', '#9db2d4');
-      help_builtIn.position(p.windowWidth / 12, p.windowHeight / 13 * 0.1);
-      helps.push(help_builtIn);
+      if (helps.length === 0) {
+        let help_builtIn = p.createSpan('STEP 1: <strong>Upload</strong> a midi file or <br> <strong>Choose</strong> a built-in file to visualize it');
+        help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
+        help_builtIn.style('color', '#9db2d4');
+        spans.push({ span: help_builtIn, xPercent: 0.17, yPercent: 0.015, wPercent: 0.16, hPercent: 0.045 }); 
+        helps.push(help_builtIn);
 
-      let help_play = p.createSpan('STEP 2: Click the "▶︎" button to start the music');
-      help_play.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_play.style('width', '320px');
-      help_play.style('color', '#9db2d4');
-      help_play.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13 * 0.1);
-      helps.push(help_play);
+        let help_play = p.createSpan('STEP 2: Click the "▶︎" button to start the music');
+        help_play.style('background', 'rgba(251, 251, 251, 0.3)');
+        help_play.style('color', '#9db2d4');
+        spans.push({ span: help_play, xPercent: 0.4, yPercent: 0.015, wPercent: 0.22, hPercent: 0.02 }); 
+        helps.push(help_play);
 
-      let help_tempo = p.createSpan('STEP 3: Adjust the TEMPO to experience variations');
-      help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
-      help_tempo.style('width', '340px');
-      help_tempo.style('color', '#9db2d4');
-      help_tempo.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13 * 0.1);
-      helps.push(help_tempo);
+        let help_tempo = p.createSpan('STEP 3: Adjust the TEMPO to experience variations');
+        help_tempo.style('background', 'rgba(251, 251, 251, 0.3)');
+        help_tempo.style('color', '#9db2d4');
+        spans.push({ span: help_tempo, xPercent: 0.7, yPercent: 0.015, wPercent: 0.24, hPercent: 0.02 }); 
+        helps.push(help_tempo);
 
-      let help_mouse = p.createSpan(`
-        Tips: <br><br>
-        When the music is NOT playing: <br>
-        Adjust the viewpoint by dragging the mouse <br>
-        or using the mouse wheel!<br><br>
-        Try to click on the box!`);
-        help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
-        help_mouse.style('color', '#9db2d4');
-        help_mouse.style('width', '300px');
-        help_mouse.position(p.windowWidth / 12 * 4.5, p.windowHeight / 13 * 5);
-        helps.push(help_mouse);
-
-        let Tips_refresh = p.createSpan(`
+        let help_mouse = p.createSpan(`
           Tips: <br><br>
-          If you experience performance issue<br>
-          Try to <strong>refreshing</strong> the page!<br><br>
-          <strong>Click the "?" button again to close the messages</strong>`);
-          Tips_refresh.style('background', 'rgba(251, 251, 251, 0.3)');
-          Tips_refresh.style('color', '#9db2d4');
-          Tips_refresh.style('width', '340px');
-          Tips_refresh.position(p.windowWidth / 12 * 8.5, p.windowHeight / 13 * 5);
-          helps.push(Tips_refresh);
+          When the music is NOT playing: <br>
+          Adjust the viewpoint by dragging the mouse <br>
+          or using the mouse wheel!<br><br>
+          Try to click on the box!`);
+          help_mouse.style('background', 'rgba(251, 251, 251, 0.3)');
+          help_mouse.style('color', '#9db2d4');
+          spans.push({ span: help_mouse, xPercent: 0.4, yPercent: 0.4, wPercent: 0.22, hPercent: 0.2 }); 
+          helps.push(help_mouse);
 
-          // ---------------------------------- set color indicators ----------------------------------------------------
-          let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-          let colors = ['rgba(226, 165, 173, 0.5)', 'rgba(201, 147, 154, 0.5)', 'rgba(237, 205, 206, 0.5)', 'rgba(209, 182, 183, 0.5)', 'rgba(239, 241, 254, 0.5)', 'rgba(246, 246, 246, 0.5)', 'rgba(201, 192, 181, 0.5)', 'rgba(181, 199, 201, 0.5)', 'rgba(195, 217, 219, 0.5)', 'rgba(136, 149, 177, 0.5)', 'rgba(118, 129, 153, 0.5)', 'rgba(84, 108, 140, 0.5)']
-          let positionX = p.windowWidth / 12 * 0.5;
-          
-          for (let i = 0; i < noteNames.length; i++) {
-            let newSpan = p.createSpan(`${noteNames[i]}`);
-            newSpan.style('background', colors[i]);
-            newSpan.style('width', '3px');
-            newSpan.style('height', '40px');
-            newSpan.style('align-items', 'center');
-            newSpan.style('justify-content', 'center');
-            newSpan.style('display', 'flex');
+          let Tips_refresh = p.createSpan(`
+            Tips: <br><br>
+            If you experience performance issue<br>
+            Try to <strong>refreshing</strong> the page!<br><br>
+            <strong>Click the "?" button again to close the messages</strong>`);
+            Tips_refresh.style('background', 'rgba(251, 251, 251, 0.3)');
+            Tips_refresh.style('color', '#9db2d4');
+            spans.push({ span: Tips_refresh, xPercent: 0.7, yPercent: 0.4, wPercent: 0.24, hPercent: 0.2 }); 
+            helps.push(Tips_refresh);
 
-            newSpan.position(positionX, p.windowHeight / 13 * 11.5);
-            positionX += 40;
-            helps.push(newSpan);
+            // ---------------------------------- set color indicators ----------------------------------------------------
+            let noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            let colors = ['rgba(226, 165, 173, 0.5)', 'rgba(201, 147, 154, 0.5)', 'rgba(237, 205, 206, 0.5)', 'rgba(209, 182, 183, 0.5)', 'rgba(239, 241, 254, 0.5)', 'rgba(246, 246, 246, 0.5)', 'rgba(201, 192, 181, 0.5)', 'rgba(181, 199, 201, 0.5)', 'rgba(195, 217, 219, 0.5)', 'rgba(136, 149, 177, 0.5)', 'rgba(118, 129, 153, 0.5)', 'rgba(84, 108, 140, 0.5)']
+            let positionX = 0.03;
+            
+            for (let i = 0; i < noteNames.length; i++) {
+              let newSpan = p.createSpan(`${noteNames[i]}`);
+              newSpan.style('background', colors[i]);
+              //newSpan.style('width', '3px');
+              //newSpan.style('height', '40px');
+              newSpan.style('align-items', 'center');
+              newSpan.style('justify-content', 'center');
+              newSpan.style('display', 'flex');
+
+              //newSpan.position(positionX, p.windowHeight / 13 * 11.5);
+              spans.push({ span: newSpan, xPercent: positionX, yPercent: 0.93, wPercent: 0.005, hPercent: 0.02 }); 
+              positionX += 0.025;
+              helps.push(newSpan);
+            }
+          } else {
+            helps.forEach(help => help.style('display', 'inline'));  // Show all help elements
           }
     }
 
     function hideHelp() {
-      helps.forEach(help => help.remove());
-      helps = [];
+      helps.forEach(help => help.style('display', 'none'));  // Hide all help elements
     }
 
     function toggleBuiltInOptions(p) {
@@ -560,7 +602,7 @@ let sketch2D = function(p) {
             item.mouseOver(() => item.style('background-color', '#555'));
             item.mouseOut(() => item.style('background-color', 'rgba(51, 51, 51, 0.05)'));
             item.mousePressed(() => loadBuiltInMidi(p, file));
-            item.position(p.windowWidth / 12, positionY);
+            item.position(p.windowWidth * 0.17, positionY);
             item.class('builtIns');
             positionY += 35;
             builtInMidis.push(item);
@@ -568,7 +610,7 @@ let sketch2D = function(p) {
     }
 
     function loadBuiltInMidi(p, file) {
-        let fileUrl = `/3D-sequencer/builtInMidi/${file}.json`; // Construct the file URL based on the file name
+        let fileUrl = `/builtInMidi/${file}.json`; // Construct the file URL based on the file name
         
         p.loadJSON(fileUrl, (json) => {
             handleMidiJSON(json); // Use the existing function to handle the parsed MIDI JSON object

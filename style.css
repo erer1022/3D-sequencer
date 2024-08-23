@@ -25,7 +25,7 @@ button {
   display: inline-flex;
   fill: currentcolor;
   font-family: "Google Sans",Roboto,Arial,sans-serif;
-  font-size: 12px;
+  font-size: 0.8vw;
   font-weight: 600;
   height: 35px;
   justify-content: center;
@@ -33,7 +33,7 @@ button {
   line-height: normal;
   max-width: 100%;
   overflow: visible;
-  padding: 2px 15px;
+  padding: 1vw 1vw;
   position: relative;
   text-align: center;
   text-transform: none;
@@ -71,7 +71,7 @@ span {
   
   display: inline-block;
   font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
+  font-size: 1vw;
   font-weight: 500;
   line-height: 20px;
   list-style: none;
@@ -114,7 +114,7 @@ span {
   user-select: none;
   -webkit-user-select: none;
   touch-action: manipulation;
-  width: 320px; /* Fixed width */
+  width: 300px; /* Fixed width */
 }
 
 /* Style the file selector button */
