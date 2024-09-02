@@ -393,11 +393,6 @@ let sketch3D = function(p) {
     numOriginTracks++;
 
     return newTrack;
-
-    // Create a play button for the new track
-    // let playButton = p.createButton(`▶︎`);
-    // playButton.position(500 + (numOriginTracks - 1) * 70, 735); // Adjust the position dynamically
-    // playButton.mousePressed(() => playTrack(newTrack)); // Pass the correct track index
   }
 
   p.draw = function() {
@@ -502,8 +497,8 @@ let sketch3D = function(p) {
     for (let i = 0; i < tracks.length; i++) {
       let trackBall = trackBalls[i];
       let currentTrackInitialBox = tracks[i][0];
+      //box Height variation is increased to 4
       let boxHeight = defaultPitch + (currentTrackInitialBox.pitch - defaultPitch) * 4;
-      
       trackBall.x = currentTrackInitialBox.position.x + currentTrackInitialBox.duration * baseWidth / 2;
       trackBall.y = currentTrackInitialBox.position.y - boxHeight - trackBallBase;
     }
@@ -801,8 +796,6 @@ function playTrack(track) {
 
   function setNoteValues() {
     for(let i = 0; i < tracks.length; i++) {
-      //let delay = i * 480;
-      //let cumulativeTicks = delay;
       let cumulativeTicks = 0;
       tracks[i].forEach (noteBox => {
           noteBox.ticks = cumulativeTicks + "i";
@@ -909,7 +902,6 @@ function playTrack(track) {
       } else {
           latestBox = null;
       }
-        
         console.log(`Deleted the latest box from track index ${currentTrackIndex}.`);
     } else {
         console.log("No matching track found with the latest box.");
@@ -1144,19 +1136,16 @@ function detectAndDrawPotentialBoxes(box, p) {
   if (box.isMouseNearBoxFrontSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.FRONT, p);
     showPotentialBox = true;
-    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (box.isMouseNearBoxLeftSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.LEFT, p);
     showPotentialBox = true;
-    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (box.isMouseNearBoxRightSide(p)) {
     potentialBoxPosition = generatePotentialBoxesPositions(box, BoxSide.RIGHT, p);
     showPotentialBox = true;
-    //drawPotentialBox(potentialBoxPosition, p);
   }
 
   if (!showPotentialBox) {
@@ -1166,7 +1155,6 @@ function detectAndDrawPotentialBoxes(box, p) {
   if (potentialBoxPosition) {
     drawPotentialBox(potentialBoxPosition, p);
   }
-  
   showPotentialBox = false;
 }
 

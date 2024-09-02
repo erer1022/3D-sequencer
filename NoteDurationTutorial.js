@@ -218,9 +218,11 @@ let sketch2D = function(p) {
         noteDuration.size(450, 320);
 
         let reminderSpan = p.createSpan(`
-            Click on the box to feel the note duration! <br>
+            Click on the box to feel the note duration!<br>
+            In this project, we use the <b>WIDTH</b> of the boxes to represent the duration of each note.
             `);
-        reminderSpan.position(200, 50);
+        reminderSpan.position(200, 20);
+        reminderSpan.style('width', '700px')
         reminderSpan.style('background', 'transparent');
 
         let citeSpan = p.createSpan('note pictures: By PianistHere - Own work, CC BY-SA 4.0, https://commons.wikimedia.org/w/index.php?curid=2192688 <br> https://piano-music-theory.com/2016/05/29/notes-duration-and-the-different-note-types/');

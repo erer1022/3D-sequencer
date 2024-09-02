@@ -40,10 +40,10 @@ let sketch2D = function(p) {
       tutorialButton.style('color', '#000307');
 
       let NoteDurationTutorial = p.select('#NoteDurationTutorial');
-      NoteDurationTutorial.position(180, 100);
+      NoteDurationTutorial.position(400, 150);
 
       let NotePitchTutorial = p.select('#NotePitchTutorial');
-      NotePitchTutorial.position(800, 100);
+      NotePitchTutorial.position(800, 150);
 
       displayIntro(p);
     }

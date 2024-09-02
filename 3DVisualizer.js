@@ -197,18 +197,16 @@ let sketch3D = function(p) {
                 // ppq stands for 1/4
                 
                 let z = 0;
-                
-          
                 notes.forEach(note => {
-                  
                     let noteDuration = note.durationTicks / useableMidiObject.header.ppq / 4;
                     let noteBox = new NoteBox(p.createVector(boxPosX, trackOffset, z), noteDuration, note.midi);
                     // set noteBox's startTime and endTime
                     noteBox.startTime = note.ticks;
                     noteBox.endTime = note.ticks + note.durationTicks;
                     trackNoteBoxes.push(noteBox);
+                    // if the noteBoxes start at the same time and in the same track, 
+                    // means they composite the chord, thus increase z to list them at the same x position
                     z += boxDepth;
-                  
                 });
               }
           }
@@ -299,7 +297,7 @@ let sketch2D = function(p) {
       CW.tempoOffset = 0;
 
         fileDrop = p.createFileInput(handleMidiFile);
-        fileDrop.position(p.windowWidth * 0.17, p.windowHeight / 13 * 1.5);
+        fileDrop.position(p.windowWidth * 0.15, p.windowHeight / 13 * 1.5);
         // Use the changed method to handle new file upload
         fileDrop.changed(() => {
             let file = fileDrop.elt.files[0];
@@ -313,7 +311,6 @@ let sketch2D = function(p) {
 
         // Create a span for BPM
         bpmSpan = p.createSpan('BPM: 0');
-        //bpmSpan.position(p.windowWidth / 12 * 8.8, p.windowHeight / 13 * 2.8);
         spans.push({ span: bpmSpan, xPercent: 0.73, yPercent: 0.22, wPercent: 0.07, hPercent: 0.023  });
 
         // -------------------------------------------- tempo setting block
@@ -384,7 +381,7 @@ let sketch2D = function(p) {
             builtInButton.style('background', '#b3cbf2')
         });
         builtInButton.mousePressed(() => toggleBuiltInOptions(p));
-        builtInButton.position(p.windowWidth * 0.17, p.windowHeight / 13 * 2.5);
+        builtInButton.position(p.windowWidth * 0.15, p.windowHeight / 13 * 2.5);
 
 
         // Set initial positions
@@ -549,10 +546,10 @@ let sketch2D = function(p) {
 
     function displayHelp(p) {
       if (helps.length === 0) {
-        let help_builtIn = p.createSpan('STEP 1: <strong>Upload</strong> a midi file or <br> <strong>Choose</strong> a built-in file to visualize it');
+        let help_builtIn = p.createSpan('STEP 1: <strong>Upload</strong> a midi file or <br><strong>Choose</strong> a built-in file to visualize it');
         help_builtIn.style('background', 'rgba(251, 251, 251, 0.3)');
         help_builtIn.style('color', '#9db2d4');
-        spans.push({ span: help_builtIn, xPercent: 0.17, yPercent: 0.015, wPercent: 0.16, hPercent: 0.045 }); 
+        spans.push({ span: help_builtIn, xPercent: 0.15, yPercent: 0.015, wPercent: 0.16, hPercent: 0.045 }); 
         helps.push(help_builtIn);
 
         let help_play = p.createSpan('STEP 2: Click the "▶︎" button to start the music');
@@ -569,7 +566,7 @@ let sketch2D = function(p) {
 
         let help_mouse = p.createSpan(`
           Tips: <br><br>
-          When the music is NOT playing: <br>
+          When the music is NOT playing, <br>
           Adjust the viewpoint by dragging the mouse <br>
           or using the mouse wheel!<br><br>
           Try to click on the box!`);
@@ -580,8 +577,8 @@ let sketch2D = function(p) {
 
           let Tips_refresh = p.createSpan(`
             Tips: <br><br>
-            If you experience performance issue<br>
-            Try to <strong>refreshing</strong> the page!<br><br>
+            If you experience performance issue,<br>
+            try to <strong>refreshing</strong> the page!<br><br>
             <strong>Click the "?" button again to close the messages</strong>`);
             Tips_refresh.style('background', 'rgba(251, 251, 251, 0.3)');
             Tips_refresh.style('color', '#9db2d4');
@@ -643,9 +640,7 @@ let sketch2D = function(p) {
             "007-Chopin-Nocturne-in-E-Flat-Opus-9-Nr-2",
             "008-Debussy-Clair-de-lune",
             "009-Debussy-Reverie",
-            "010-Canon-3",
-            "011-Golden-Hour",
-            "012-Mr-Lawrence-Merry-Christmas"
+            "010-Canon-3"
         ];
         let positionY = p.windowHeight / 13 * 3.5;
 
@@ -654,7 +649,7 @@ let sketch2D = function(p) {
             item.mouseOver(() => item.style('background-color', '#555'));
             item.mouseOut(() => item.style('background-color', 'rgba(51, 51, 51, 0.05)'));
             item.mousePressed(() => loadBuiltInMidi(p, file));
-            item.position(p.windowWidth * 0.17, positionY);
+            item.position(p.windowWidth * 0.15, positionY);
             item.class('builtIns');
             positionY += 35;
             builtInMidis.push(item);
@@ -857,9 +852,6 @@ let sketch2D = function(p) {
             break;
         }
       }
-
-    
-
   
     p.draw = function() {
       p.textFont(font);
