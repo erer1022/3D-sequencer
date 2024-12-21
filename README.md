@@ -1,6 +1,6 @@
 # MusicBox
 
-![Logo](https://github.com/erer1022/3D-sequencer/tree/main/pictures/logo.png)
+![Logo](https://github.com/erer1022/3D-sequencer/blob/main/pictures/logo.png)
 
 MusicBox is a web-based 3D MIDI visualizer and sequencer.
 
@@ -47,7 +47,7 @@ Start your journey into the world of music visualization and creation today!
 - Customize the playback by adjusting the tempo settings.  
 - Experience dynamic and immersive 3D animations that bring your music to life.
 
-![Visualizer Animation](https://github.com/erer1022/3D-sequencer/tree/main/pictures/visualizer.gif)
+![Visualizer Animation](https://github.com/erer1022/3D-sequencer/blob/main/pictures/visualizer.gif)
 
 ---
 
@@ -58,7 +58,7 @@ Start your journey into the world of music visualization and creation today!
 - Add more elements, such as trackballs and tracks, to expand your composition.  
 - Press play to watch and hear your masterpiece in action.
 
-![Sequencer Animation](https://github.com/erer1022/3D-sequencer/tree/main/pictures/sequencer.gif)
+![Sequencer Animation](https://github.com/erer1022/3D-sequencer/blob/main/pictures/sequencer.gif)
 
 ---
 
